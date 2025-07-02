@@ -45,13 +45,13 @@ class SendEmailRequest(BaseModel):
         ... )
     """
 
-    template_key: str = Field(..., description="The template key to use")
+    template_key: str = Field(..., description="The template key to use", alias="templateKey")
     recipient: str = Field(..., description="The recipient email address")
     data: Dict[str, Any] = Field(
         ..., description="Template data for variable substitution"
     )
     provider: Optional[EmailProvider] = Field(
-        None, description="Optional email provider to use"
+        None, description="Optional email provider to use", alias="providerType"
     )
 
     @validator("template_key")
@@ -100,6 +100,7 @@ class SendEmailRequest(BaseModel):
 
         use_enum_values = True
         validate_assignment = True
+        allow_population_by_field_name = True
 
 
 class SendEmailResponse(BaseModel):
@@ -116,15 +117,16 @@ class SendEmailResponse(BaseModel):
         timestamp: Timestamp when the email was sent
     """
 
-    message_id: str = Field(..., description="Unique message ID for the sent email")
-    status: str = Field(..., description="Email status")
+    success: bool = Field(..., description="Whether the email was sent successfully")
+    message: str = Field(..., description="Human-readable status message")
+    message_id: str = Field(..., description="Unique message ID for the sent email", alias="messageId")
     provider: EmailProvider = Field(..., description="Email provider that was used")
-    timestamp: datetime = Field(..., description="Timestamp when the email was sent")
 
     class Config:
         """Pydantic config."""
 
         use_enum_values = True
+        allow_population_by_field_name = True
 
 
 class BulkEmailResult(BaseModel):
