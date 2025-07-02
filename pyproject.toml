@@ -10,7 +10,7 @@ readme = "README.md"
 requires-python = ">=3.8"
 license = {text = "MIT"}
 authors = [
-    {name = "Huefy Team", email = "developers@huefy.com"},
+    {name = "Huefy Team", email = "hello@huefy.dev"},
 ]
 keywords = ["huefy", "email", "api", "sdk", "template", "transactional"]
 classifiers = [
@@ -52,7 +52,7 @@ async = [
 ]
 
 [project.urls]
-Documentation = "https://docs.huefy.com/sdk/python"
+Documentation = "https://docs.huefy.dev/sdk/python"
 Repository = "https://github.com/huefy/huefy-sdk"
 "Bug Tracker" = "https://github.com/huefy/huefy-sdk/issues"
 
