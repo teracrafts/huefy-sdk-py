@@ -12,26 +12,26 @@ with open(os.path.join(os.path.dirname(__file__), 'README.md'), encoding='utf-8'
     long_description = f.read()
 
 # Get version from __init__.py
-with open(os.path.join(os.path.dirname(__file__), 'huefy', '__init__.py'), encoding='utf-8') as f:
-    version_match = re.search(r"^__version__ = ['"]([^'"]*)['"]$", f.read(), re.M)
+with open(os.path.join(os.path.dirname(__file__), 'teracrafts_huefy', '__init__.py'), encoding='utf-8') as f:
+    version_match = re.search(r"^__version__ = ['\"]([^'\"]*)['\"]$", f.read(), re.M)
     if version_match:
         version = version_match.group(1)
     else:
         raise RuntimeError("Unable to find version string.")
 
 setup(
-    name='huefy',
+    name='teracrafts-huefy',
     version=version,
     description='Official Python SDK for the Huefy email sending platform',
     long_description=long_description,
     long_description_content_type='text/markdown',
     author='Huefy Team',
     author_email='developers@huefy.com',
-    url='https://github.com/huefy/huefy-sdk',
+    url='https://github.com/teracrafts/huefy-sdk',
     project_urls={
         'Documentation': 'https://docs.huefy.com/sdk/python',
-        'Source': 'https://github.com/huefy/huefy-sdk',
-        'Tracker': 'https://github.com/huefy/huefy-sdk/issues',
+        'Source': 'https://github.com/teracrafts/huefy-sdk',
+        'Tracker': 'https://github.com/teracrafts/huefy-sdk/issues',
     },
     license='MIT',
     classifiers=[
@@ -51,7 +51,7 @@ setup(
     keywords='huefy email api sdk template transactional',
     packages=find_packages(exclude=['tests*', 'examples*']),
     package_data={
-        'huefy': ['py.typed'],
+        'teracrafts_huefy': ['py.typed'],
     },
     python_requires='>=3.8',
     install_requires=[
@@ -79,7 +79,7 @@ setup(
     },
     entry_points={
         'console_scripts': [
-            'huefy=huefy.cli:main',
+            'huefy=teracrafts_huefy.cli:main',
         ],
     },
     zip_safe=False,

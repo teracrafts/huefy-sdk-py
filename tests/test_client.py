@@ -5,7 +5,7 @@ import responses
 from datetime import datetime
 from requests.exceptions import ConnectionError, Timeout
 
-from huefy import (
+from teracrafts_huefy import (
     HuefyClient,
     HuefyConfig,
     RetryConfig,

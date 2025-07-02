@@ -5,7 +5,7 @@ Send template-based emails with support for multiple providers,
 automatic retries, and comprehensive error handling.
 
 Basic usage:
-    >>> from huefy import HuefyClient
+    >>> from teracrafts_huefy import HuefyClient
     >>> client = HuefyClient("your-api-key")
     >>> response = client.send_email(
     ...     template_key="welcome-email",
@@ -37,7 +37,7 @@ from .models import (
 )
 from .config import HuefyConfig, RetryConfig
 
-__version__ = "1.0.0"
+__version__ = "1.0.0-beta.9"
 __author__ = "Huefy Team"
 __email__ = "developers@huefy.com"
 __license__ = "MIT"

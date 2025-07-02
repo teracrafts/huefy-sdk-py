@@ -2,7 +2,7 @@
 
 import pytest
 
-from huefy.exceptions import (
+from teracrafts_huefy.exceptions import (
     HuefyError,
     AuthenticationError,
     TemplateNotFoundError,

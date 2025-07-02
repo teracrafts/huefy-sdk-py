@@ -53,18 +53,18 @@ async = [
 
 [project.urls]
 Documentation = "https://docs.huefy.dev/sdk/python"
-Repository = "https://github.com/huefy/huefy-sdk"
-"Bug Tracker" = "https://github.com/huefy/huefy-sdk/issues"
+Repository = "https://github.com/teracrafts/huefy-sdk"
+"Bug Tracker" = "https://github.com/teracrafts/huefy-sdk/issues"
 
 [project.scripts]
-huefy = "huefy.cli:main"
+huefy = "teracrafts_huefy.cli:main"
 
 [tool.setuptools.packages.find]
-include = ["huefy*"]
+include = ["teracrafts_huefy*"]
 exclude = ["tests*", "examples*"]
 
 [tool.setuptools.package-data]
-huefy = ["py.typed"]
+teracrafts_huefy = ["py.typed"]
 
 [tool.black]
 line-length = 88
@@ -97,7 +97,7 @@ use_parentheses = true
 ensure_newline_before_comments = true
 
 [tool.mypy]
-python_version = "1.0.0-beta.9"
+python_version = "3.8"
 warn_return_any = true
 warn_unused_configs = true
 disallow_untyped_defs = true
@@ -112,20 +112,20 @@ warn_unreachable = true
 strict_equality = true
 
 [tool.pytest.ini_options]
-minversion = "1.0.0-beta.9"
+minversion = "6.0"
 addopts = "-ra -q --strict-markers --disable-warnings"
 testpaths = ["tests"]
 python_files = ["test_*.py", "*_test.py"]
 python_classes = ["Test*"]
 python_functions = ["test_*"]
 markers = [
-    "slow: marks tests as slow (deselect with '-m "not slow"')",
+    "slow: marks tests as slow (deselect with '-m \"not slow\"')",
     "integration: marks tests as integration tests",
     "unit: marks tests as unit tests",
 ]
 
 [tool.coverage.run]
-source = ["huefy"]
+source = ["teracrafts_huefy"]
 omit = [
     "*/tests/*",
     "*/examples/*",

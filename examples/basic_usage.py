@@ -17,16 +17,16 @@ import os
 import time
 from typing import Dict, Any, List
 
-from huefy import HuefyClient, AsyncHuefyClient
-from huefy.models import EmailProvider, SendEmailRequest
-from huefy.exceptions import (
+from teracrafts_huefy import HuefyClient, AsyncHuefyClient
+from teracrafts_huefy.models import EmailProvider, SendEmailRequest
+from teracrafts_huefy.exceptions import (
     HuefyException,
     ValidationException,
     AuthenticationException,
     NetworkException,
     TimeoutException
 )
-from huefy.config import HuefyConfig, RetryConfig
+from teracrafts_huefy.config import HuefyConfig, RetryConfig
 
 
 # Helper data classes

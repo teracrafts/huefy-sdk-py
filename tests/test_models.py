@@ -4,7 +4,7 @@ import pytest
 from datetime import datetime
 from pydantic import ValidationError
 
-from huefy.models import (
+from teracrafts_huefy.models import (
     EmailProvider,
     SendEmailRequest,
     SendEmailResponse,
