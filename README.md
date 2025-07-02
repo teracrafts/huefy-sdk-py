@@ -9,7 +9,7 @@ The official Python SDK for the Huefy email sending platform. Send template-base
 Install the SDK using pip:
 
 ```bash
-pip install huefy
+pip install teracrafts-huefy
 ```
 
 ### Development Installation
@@ -17,19 +17,19 @@ pip install huefy
 For development with optional dependencies:
 
 ```bash
-pip install huefy[dev]
+pip install teracrafts-huefy[dev]
 ```
 
 For async support:
 
 ```bash
-pip install huefy[async]
+pip install teracrafts-huefy[async]
 ```
 
 ## Quick Start
 
 ```python
-from huefy import HuefyClient
+from teracrafts_huefy import HuefyClient
 
 # Create client
 client = HuefyClient("your-api-key")
@@ -53,7 +53,7 @@ client.close()
 ### Using Context Manager
 
 ```python
-from huefy import HuefyClient
+from teracrafts_huefy import HuefyClient
 
 with HuefyClient("your-api-key") as client:
     response = client.send_email(
@@ -83,7 +83,7 @@ with HuefyClient("your-api-key") as client:
 ### Basic Configuration
 
 ```python
-from huefy import HuefyClient
+from teracrafts_huefy import HuefyClient
 
 client = HuefyClient("your-api-key")
 ```
@@ -91,7 +91,7 @@ client = HuefyClient("your-api-key")
 ### Advanced Configuration
 
 ```python
-from huefy import HuefyClient, HuefyConfig, RetryConfig
+from teracrafts_huefy import HuefyClient, HuefyConfig, RetryConfig
 
 config = HuefyConfig(
     base_url="https://api.huefy.com",
@@ -130,7 +130,7 @@ Creates a new Huefy client with the provided API key and optional configuration.
 Sends a single email using a template.
 
 ```python
-from huefy import EmailProvider
+from teracrafts_huefy import EmailProvider
 
 response = client.send_email(
     template_key="welcome-email",
@@ -148,7 +148,7 @@ response = client.send_email(
 Sends multiple emails in a single request.
 
 ```python
-from huefy import SendEmailRequest
+from teracrafts_huefy import SendEmailRequest
 
 requests = [
     SendEmailRequest(
@@ -199,7 +199,7 @@ with HuefyClient("api-key") as client:
 The SDK provides specific exception types for different failure scenarios:
 
 ```python
-from huefy import (
+from teracrafts_huefy import (
     HuefyError,
     AuthenticationError,
     TemplateNotFoundError,
@@ -251,7 +251,7 @@ except HuefyError as e:
 Supported email providers:
 
 ```python
-from huefy import EmailProvider
+from teracrafts_huefy import EmailProvider
 
 EmailProvider.SES        # Amazon SES
 EmailProvider.SENDGRID   # SendGrid
@@ -264,7 +264,7 @@ EmailProvider.MAILCHIMP  # Mailchimp Transactional
 Email request model:
 
 ```python
-from huefy import SendEmailRequest, EmailProvider
+from teracrafts_huefy import SendEmailRequest, EmailProvider
 
 request = SendEmailRequest(
     template_key="welcome-email",
@@ -293,7 +293,7 @@ print(f"Timestamp: {response.timestamp}")
 Client configuration:
 
 ```python
-from huefy import HuefyConfig
+from teracrafts_huefy import HuefyConfig
 
 config = HuefyConfig(
     base_url="https://api.huefy.com",     # API base URL
@@ -308,7 +308,7 @@ config = HuefyConfig(
 Retry behavior configuration:
 
 ```python
-from huefy import RetryConfig
+from teracrafts_huefy import RetryConfig
 
 retry_config = RetryConfig(
     enabled=True,           # Enable retries
@@ -332,7 +332,7 @@ Retries are automatically performed for:
 ### Basic Email Sending
 
 ```python
-from huefy import HuefyClient
+from teracrafts_huefy import HuefyClient
 
 with HuefyClient("your-api-key") as client:
     response = client.send_email(
@@ -350,7 +350,7 @@ with HuefyClient("your-api-key") as client:
 ### Bulk Email Sending
 
 ```python
-from huefy import HuefyClient, SendEmailRequest
+from teracrafts_huefy import HuefyClient, SendEmailRequest
 
 # Prepare multiple email requests
 requests = [
@@ -378,7 +378,7 @@ with HuefyClient("your-api-key") as client:
 ### Error Handling with Specific Provider
 
 ```python
-from huefy import (
+from teracrafts_huefy import (
     HuefyClient,
     EmailProvider,
     ProviderError,
@@ -407,7 +407,7 @@ with HuefyClient("your-api-key") as client:
 ### Health Check Monitoring
 
 ```python
-from huefy import HuefyClient, NetworkError
+from teracrafts_huefy import HuefyClient, NetworkError
 
 def check_api_health():
     try:
@@ -442,7 +442,7 @@ pytest
 Run tests with coverage:
 
 ```bash
-pytest --cov=huefy --cov-report=html
+pytest --cov=teracrafts_huefy --cov-report=html
 ```
 
 Run specific test file:
@@ -457,7 +457,7 @@ pytest tests/test_client.py -v
 
 ```bash
 # Clone the repository
-git clone https://github.com/huefy/huefy-sdk.git
+git clone https://github.com/teracrafts/huefy-sdk.git
 cd huefy-sdk/sdks/python
 
 # Create virtual environment
@@ -476,15 +476,15 @@ pre-commit install
 Run code formatting:
 
 ```bash
-black huefy tests
-isort huefy tests
+black teracrafts_huefy tests
+isort teracrafts_huefy tests
 ```
 
 Run linting:
 
 ```bash
-flake8 huefy tests
-mypy huefy
+flake8 teracrafts_huefy tests
+mypy teracrafts_huefy
 ```
 
 ### Building Distribution
@@ -514,4 +514,4 @@ For support and questions:
 
 - 📧 Email: support@huefy.com
 - 📖 Documentation: https://docs.huefy.com
-- 🐛 Issues: https://github.com/huefy/huefy-sdk/issues
+- 🐛 Issues: https://github.com/teracrafts/huefy-sdk/issues
