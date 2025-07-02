@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "teracrafts-huefy"
-version = "1.0.0-beta.9"
+version = "1.0.0-beta.10"
 description = "Official Python SDK for Huefy - App Mail Templates with dynamic email sending"
 readme = "README.md"
 requires-python = ">=3.8"

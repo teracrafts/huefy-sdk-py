@@ -37,7 +37,7 @@ from .models import (
 )
 from .config import HuefyConfig, RetryConfig
 
-__version__ = "1.0.0-beta.9"
+__version__ = "1.0.0-beta.10"
 __author__ = "Huefy Team"
 __email__ = "developers@huefy.com"
 __license__ = "MIT"
