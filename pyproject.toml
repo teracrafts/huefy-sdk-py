@@ -53,8 +53,8 @@ async = [
 
 [project.urls]
 Documentation = "https://docs.huefy.dev/sdk/python"
-Repository = "https://github.com/teracrafts/huefy-sdk"
-"Bug Tracker" = "https://github.com/teracrafts/huefy-sdk/issues"
+Repository = "https://github.com/teracrafts/huefy-sdk-py"
+"Bug Tracker" = "https://github.com/teracrafts/huefy-sdk-py/issues"
 
 [project.scripts]
 huefy = "teracrafts_huefy.cli:main"
