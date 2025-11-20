@@ -168,7 +168,7 @@ class HuefyClient:
                 raise ValidationError(f"Validation failed for request {i}: {e}")
 
         payload = {"emails": [req.dict() for req in requests]}
-        response_data = self._make_request("POST", "/api/v1/sdk/emails/bulk", payload)
+        response_data = self._make_request("POST", "/emails/bulk", payload)
         return BulkEmailResponse.parse_obj(response_data)
 
     def health_check(self) -> HealthResponse:
@@ -180,7 +180,7 @@ class HuefyClient:
         Raises:
             HuefyError: If the request fails
         """
-        response_data = self._make_request("GET", "/api/v1/sdk/health")
+        response_data = self._make_request("GET", "/health")
         return HealthResponse.parse_obj(response_data)
 
     def _send_email_request(self, request: SendEmailRequest) -> SendEmailResponse:
@@ -197,7 +197,7 @@ class HuefyClient:
         """
         request.validate()
         response_data = self._make_request(
-            "POST", "/api/v1/sdk/emails/send", request.dict()
+            "POST", "/emails/send", request.dict()
         )
         return SendEmailResponse.parse_obj(response_data)
 
@@ -217,13 +217,37 @@ class HuefyClient:
         Raises:
             HuefyError: If the request fails
         """
-        url = urljoin(self._config.base_url, path)
+        # Use proxy if configured, otherwise direct API
+        if self._config.proxy_url:
+            url = self._config.proxy_url
+            # Create proxy request with configuration
+            proxy_data = {
+                "config": {
+                    "apiKey": self._api_key,
+                    "timeout": int((self._config.connect_timeout + self._config.read_timeout) * 1000),
+                    "retryConfig": {
+                        "enabled": self._config.retry_config.enabled,
+                        "max_retries": self._config.retry_config.max_retries,
+                        "backoff_factor": self._config.retry_config.backoff_factor,
+                        "max_delay": self._config.retry_config.max_delay,
+                    }
+                },
+                "method": method,
+                "endpoint": path,
+                "data": data
+            }
+            request_method = "POST"  # Always POST to proxy
+            request_data = proxy_data
+        else:
+            url = urljoin(self._config.base_url, path)
+            request_method = method
+            request_data = data
         
         try:
             response = self._session.request(
-                method=method,
+                method=request_method,
                 url=url,
-                json=data,
+                json=request_data,
                 timeout=(
                     self._config.connect_timeout,
                     self._config.read_timeout,
@@ -233,7 +257,19 @@ class HuefyClient:
             if response.status_code >= 400:
                 self._handle_error_response(response)
 
-            return response.json()
+            response_data = response.json()
+            
+            # Handle proxy response format
+            if self._config.proxy_url:
+                if not response_data.get("success", False):
+                    error_info = response_data.get("error", {})
+                    raise HuefyError(
+                        error_info.get("message", "Unknown proxy error"),
+                        error_info.get("code", "PROXY_ERROR")
+                    )
+                return response_data.get("data", {})
+            
+            return response_data
 
         except requests.exceptions.Timeout as e:
             raise TimeoutError("Request timed out") from e

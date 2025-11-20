@@ -9,7 +9,7 @@ The official Python SDK for the Huefy email sending platform. Send template-base
 Install the SDK using pip:
 
 ```bash
-pip install teracrafts-huefy
+pip install teracrafts-huefy-sdk-python
 ```
 
 ### Development Installation
@@ -17,19 +17,19 @@ pip install teracrafts-huefy
 For development with optional dependencies:
 
 ```bash
-pip install teracrafts-huefy[dev]
+pip install teracrafts-huefy-sdk-python[dev]
 ```
 
 For async support:
 
 ```bash
-pip install teracrafts-huefy[async]
+pip install teracrafts-huefy-sdk-python[async]
 ```
 
 ## Quick Start
 
 ```python
-from teracrafts_huefy import HuefyClient
+from teracrafts_huefy_sdk_python import HuefyClient
 
 # Create client
 client = HuefyClient("your-api-key")
@@ -53,7 +53,7 @@ client.close()
 ### Using Context Manager
 
 ```python
-from teracrafts_huefy import HuefyClient
+from teracrafts_huefy_sdk_python import HuefyClient
 
 with HuefyClient("your-api-key") as client:
     response = client.send_email(
@@ -83,7 +83,7 @@ with HuefyClient("your-api-key") as client:
 ### Basic Configuration
 
 ```python
-from teracrafts_huefy import HuefyClient
+from teracrafts_huefy_sdk_python import HuefyClient
 
 client = HuefyClient("your-api-key")
 ```
@@ -91,10 +91,9 @@ client = HuefyClient("your-api-key")
 ### Advanced Configuration
 
 ```python
-from teracrafts_huefy import HuefyClient, HuefyConfig, RetryConfig
+from teracrafts_huefy_sdk_python import HuefyClient, HuefyConfig, RetryConfig
 
 config = HuefyConfig(
-    base_url="https://api.huefy.com",
     connect_timeout=10.0,
     read_timeout=30.0,
     retry_config=RetryConfig(
@@ -130,7 +129,7 @@ Creates a new Huefy client with the provided API key and optional configuration.
 Sends a single email using a template.
 
 ```python
-from teracrafts_huefy import EmailProvider
+from teracrafts_huefy_sdk_python import EmailProvider
 
 response = client.send_email(
     template_key="welcome-email",
@@ -148,7 +147,7 @@ response = client.send_email(
 Sends multiple emails in a single request.
 
 ```python
-from teracrafts_huefy import SendEmailRequest
+from teracrafts_huefy_sdk_python import SendEmailRequest
 
 requests = [
     SendEmailRequest(
@@ -199,7 +198,7 @@ with HuefyClient("api-key") as client:
 The SDK provides specific exception types for different failure scenarios:
 
 ```python
-from teracrafts_huefy import (
+from teracrafts_huefy_sdk_python import (
     HuefyError,
     AuthenticationError,
     TemplateNotFoundError,
@@ -251,7 +250,7 @@ except HuefyError as e:
 Supported email providers:
 
 ```python
-from teracrafts_huefy import EmailProvider
+from teracrafts_huefy_sdk_python import EmailProvider
 
 EmailProvider.SES        # Amazon SES
 EmailProvider.SENDGRID   # SendGrid
@@ -264,7 +263,7 @@ EmailProvider.MAILCHIMP  # Mailchimp Transactional
 Email request model:
 
 ```python
-from teracrafts_huefy import SendEmailRequest, EmailProvider
+from teracrafts_huefy_sdk_python import SendEmailRequest, EmailProvider
 
 request = SendEmailRequest(
     template_key="welcome-email",
@@ -293,10 +292,9 @@ print(f"Timestamp: {response.timestamp}")
 Client configuration:
 
 ```python
-from teracrafts_huefy import HuefyConfig
+from teracrafts_huefy_sdk_python import HuefyConfig
 
 config = HuefyConfig(
-    base_url="https://api.huefy.com",     # API base URL
     connect_timeout=10.0,                 # Connection timeout in seconds
     read_timeout=30.0,                    # Read timeout in seconds
     retry_config=RetryConfig(...)         # Retry configuration
@@ -308,7 +306,7 @@ config = HuefyConfig(
 Retry behavior configuration:
 
 ```python
-from teracrafts_huefy import RetryConfig
+from teracrafts_huefy_sdk_python import RetryConfig
 
 retry_config = RetryConfig(
     enabled=True,           # Enable retries
@@ -332,7 +330,7 @@ Retries are automatically performed for:
 ### Basic Email Sending
 
 ```python
-from teracrafts_huefy import HuefyClient
+from teracrafts_huefy_sdk_python import HuefyClient
 
 with HuefyClient("your-api-key") as client:
     response = client.send_email(
@@ -350,7 +348,7 @@ with HuefyClient("your-api-key") as client:
 ### Bulk Email Sending
 
 ```python
-from teracrafts_huefy import HuefyClient, SendEmailRequest
+from teracrafts_huefy_sdk_python import HuefyClient, SendEmailRequest
 
 # Prepare multiple email requests
 requests = [
@@ -378,7 +376,7 @@ with HuefyClient("your-api-key") as client:
 ### Error Handling with Specific Provider
 
 ```python
-from teracrafts_huefy import (
+from teracrafts_huefy_sdk_python import (
     HuefyClient,
     EmailProvider,
     ProviderError,
@@ -407,7 +405,7 @@ with HuefyClient("your-api-key") as client:
 ### Health Check Monitoring
 
 ```python
-from teracrafts_huefy import HuefyClient, NetworkError
+from teracrafts_huefy_sdk_python import HuefyClient, NetworkError
 
 def check_api_health():
     try:
@@ -442,7 +440,7 @@ pytest
 Run tests with coverage:
 
 ```bash
-pytest --cov=teracrafts_huefy --cov-report=html
+pytest --cov=teracrafts_huefy_sdk_python --cov-report=html
 ```
 
 Run specific test file:
@@ -476,15 +474,15 @@ pre-commit install
 Run code formatting:
 
 ```bash
-black teracrafts_huefy tests
-isort teracrafts_huefy tests
+black teracrafts_huefy_sdk_python tests
+isort teracrafts_huefy_sdk_python tests
 ```
 
 Run linting:
 
 ```bash
-flake8 teracrafts_huefy tests
-mypy teracrafts_huefy
+flake8 teracrafts_huefy_sdk_python tests
+mypy teracrafts_huefy_sdk_python
 ```
 
 ### Building Distribution
@@ -512,6 +510,6 @@ MIT License - see [LICENSE](LICENSE) file for details.
 
 For support and questions:
 
-- 📧 Email: support@huefy.com
-- 📖 Documentation: https://docs.huefy.com
+- 📧 Email: support@huefy.dev
+- 📖 Documentation: https://docs.huefy.dev
 - 🐛 Issues: https://github.com/teracrafts/huefy-sdk/issues

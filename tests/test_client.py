@@ -62,7 +62,7 @@ class TestHuefyClient:
         # Setup mock response
         responses.add(
             responses.POST,
-            "https://api.huefy.com/api/v1/sdk/emails/send",
+            "https://api.huefy.dev/api/v1/sdk/emails/send",
             json={
                 "messageId": "msg-123",
                 "status": "sent",
@@ -95,7 +95,7 @@ class TestHuefyClient:
         """Test email sending with specific provider."""
         responses.add(
             responses.POST,
-            "https://api.huefy.com/api/v1/sdk/emails/send",
+            "https://api.huefy.dev/api/v1/sdk/emails/send",
             json={
                 "messageId": "msg-456",
                 "status": "sent",
@@ -145,7 +145,7 @@ class TestHuefyClient:
         """Test email sending with authentication error."""
         responses.add(
             responses.POST,
-            "https://api.huefy.com/api/v1/sdk/emails/send",
+            "https://api.huefy.dev/api/v1/sdk/emails/send",
             json={
                 "error": {
                     "code": "AUTHENTICATION_FAILED",
@@ -168,7 +168,7 @@ class TestHuefyClient:
         """Test email sending with template not found error."""
         responses.add(
             responses.POST,
-            "https://api.huefy.com/api/v1/sdk/emails/send",
+            "https://api.huefy.dev/api/v1/sdk/emails/send",
             json={
                 "error": {
                     "code": "TEMPLATE_NOT_FOUND",
@@ -194,7 +194,7 @@ class TestHuefyClient:
         """Test email sending with rate limit error."""
         responses.add(
             responses.POST,
-            "https://api.huefy.com/api/v1/sdk/emails/send",
+            "https://api.huefy.dev/api/v1/sdk/emails/send",
             json={
                 "error": {
                     "code": "RATE_LIMIT_EXCEEDED",
@@ -220,7 +220,7 @@ class TestHuefyClient:
         """Test successful bulk email sending."""
         responses.add(
             responses.POST,
-            "https://api.huefy.com/api/v1/sdk/emails/bulk",
+            "https://api.huefy.dev/api/v1/sdk/emails/bulk",
             json={
                 "results": [
                     {
@@ -299,7 +299,7 @@ class TestHuefyClient:
         """Test successful health check."""
         responses.add(
             responses.GET,
-            "https://api.huefy.com/api/v1/sdk/health",
+            "https://api.huefy.dev/api/v1/sdk/health",
             json={
                 "status": "healthy",
                 "timestamp": "2024-01-01T12:00:00Z",
@@ -321,7 +321,7 @@ class TestHuefyClient:
         with responses.RequestsMock() as rsps:
             rsps.add(
                 responses.POST,
-                "https://api.huefy.com/api/v1/sdk/emails/send",
+                "https://api.huefy.dev/api/v1/sdk/emails/send",
                 body=ConnectionError("Connection failed"),
             )
             
@@ -339,7 +339,7 @@ class TestHuefyClient:
         with responses.RequestsMock() as rsps:
             rsps.add(
                 responses.POST,
-                "https://api.huefy.com/api/v1/sdk/emails/send",
+                "https://api.huefy.dev/api/v1/sdk/emails/send",
                 body=Timeout("Request timed out"),
             )
             

@@ -12,7 +12,7 @@ with open(os.path.join(os.path.dirname(__file__), 'README.md'), encoding='utf-8'
     long_description = f.read()
 
 # Get version from __init__.py
-with open(os.path.join(os.path.dirname(__file__), 'teracrafts_huefy', '__init__.py'), encoding='utf-8') as f:
+with open(os.path.join(os.path.dirname(__file__), 'teracrafts_huefy_sdk_python', '__init__.py'), encoding='utf-8') as f:
     version_match = re.search(r"^__version__ = ['\"]([^'\"]*)['\"]$", f.read(), re.M)
     if version_match:
         version = version_match.group(1)
@@ -20,18 +20,18 @@ with open(os.path.join(os.path.dirname(__file__), 'teracrafts_huefy', '__init__.
         raise RuntimeError("Unable to find version string.")
 
 setup(
-    name='teracrafts-huefy',
+    name='teracrafts-huefy-sdk-python',
     version=version,
-    description='Official Python SDK for the Huefy email sending platform',
+    description='Official Python SDK for Huefy - App Mail Templates with dynamic email sending',
     long_description=long_description,
     long_description_content_type='text/markdown',
     author='Huefy Team',
-    author_email='developers@huefy.com',
-    url='https://github.com/teracrafts/huefy-sdk',
+    author_email='hello@huefy.dev',
+    url='https://github.com/teracrafts/huefy-sdk-py',
     project_urls={
-        'Documentation': 'https://docs.huefy.com/sdk/python',
-        'Source': 'https://github.com/teracrafts/huefy-sdk',
-        'Tracker': 'https://github.com/teracrafts/huefy-sdk/issues',
+        'Documentation': 'https://docs.huefy.dev/sdk/python',
+        'Source': 'https://github.com/teracrafts/huefy-sdk-py',
+        'Tracker': 'https://github.com/teracrafts/huefy-sdk-py/issues',
     },
     license='MIT',
     classifiers=[
@@ -51,7 +51,7 @@ setup(
     keywords='huefy email api sdk template transactional',
     packages=find_packages(exclude=['tests*', 'examples*']),
     package_data={
-        'teracrafts_huefy': ['py.typed'],
+        'teracrafts_huefy_sdk_python': ['py.typed'],
     },
     python_requires='>=3.8',
     install_requires=[
@@ -79,7 +79,7 @@ setup(
     },
     entry_points={
         'console_scripts': [
-            'huefy=teracrafts_huefy.cli:main',
+            'huefy=teracrafts_huefy_sdk_python.cli:main',
         ],
     },
     zip_safe=False,

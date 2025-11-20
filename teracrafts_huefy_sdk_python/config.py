@@ -75,7 +75,7 @@ class HuefyConfig(BaseModel):
 
     Example:
         >>> config = HuefyConfig(
-        ...     base_url="https://api.huefy.com",
+        ...     base_url="https://api.huefy.dev",
         ...     connect_timeout=10.0,
         ...     read_timeout=30.0,
         ...     retry_config=RetryConfig(
@@ -86,8 +86,12 @@ class HuefyConfig(BaseModel):
         >>> client = HuefyClient("api-key", config)
     """
 
+    proxy_url: Optional[str] = Field(
+        default="http://localhost:8080/huefy-proxy", 
+        description="Proxy URL for optimized routing"
+    )
     base_url: str = Field(
-        default="https://api.huefy.com", description="Base URL for the Huefy API"
+        default="https://api.huefy.dev", description="Base URL for the Huefy API"
     )
     connect_timeout: float = Field(
         default=10.0, gt=0.0, description="Connection timeout in seconds"

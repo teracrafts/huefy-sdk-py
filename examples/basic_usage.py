@@ -218,7 +218,7 @@ def custom_configuration_example(api_key: str):
     )
 
     config = HuefyConfig(
-        base_url="https://api.huefy.com",
+        base_url="https://api.huefy.dev",
         timeout=45.0,
         retry_config=retry_config
     )
