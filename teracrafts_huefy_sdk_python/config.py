@@ -68,14 +68,14 @@ class HuefyConfig(BaseModel):
     of the HuefyClient, including timeouts, retry settings, and API endpoint.
 
     Attributes:
-        base_url: Base URL for the Huefy API
+        base_url: Custom base URL (overrides local setting)
         connect_timeout: Connection timeout in seconds
         read_timeout: Read timeout in seconds
         retry_config: Retry configuration
+        local: Use local development endpoints (default: False, uses production)
 
     Example:
         >>> config = HuefyConfig(
-        ...     base_url="https://api.huefy.dev",
         ...     connect_timeout=10.0,
         ...     read_timeout=30.0,
         ...     retry_config=RetryConfig(
@@ -84,14 +84,18 @@ class HuefyConfig(BaseModel):
         ...     )
         ... )
         >>> client = HuefyClient("api-key", config)
+
+        # For local development
+        >>> local_config = HuefyConfig(local=True)
+        >>> client = HuefyClient("api-key", local_config)
     """
 
-    proxy_url: Optional[str] = Field(
-        default="http://localhost:8080/huefy-proxy", 
-        description="Proxy URL for optimized routing"
-    )
-    base_url: str = Field(
-        default="https://api.huefy.dev", description="Base URL for the Huefy API"
+    # Production endpoints (default)
+    PRODUCTION_HTTP_ENDPOINT: str = "https://api.huefy.dev/api/v1/sdk"
+    LOCAL_HTTP_ENDPOINT: str = "http://localhost:8080/api/v1/sdk"
+
+    base_url: Optional[str] = Field(
+        default=None, description="Custom base URL (overrides local setting)"
     )
     connect_timeout: float = Field(
         default=10.0, gt=0.0, description="Connection timeout in seconds"
@@ -102,12 +106,27 @@ class HuefyConfig(BaseModel):
     retry_config: RetryConfig = Field(
         default_factory=RetryConfig, description="Retry configuration"
     )
+    local: bool = Field(
+        default=False, description="Use local development endpoints"
+    )
+
+    def get_http_endpoint(self) -> str:
+        """Get the HTTP endpoint based on configuration.
+
+        Returns:
+            str: The HTTP endpoint URL
+        """
+        if self.base_url:
+            return self.base_url.rstrip("/")
+        return self.LOCAL_HTTP_ENDPOINT if self.local else self.PRODUCTION_HTTP_ENDPOINT
 
     @validator("base_url")
-    def validate_base_url(cls, v: str) -> str:
+    def validate_base_url(cls, v: Optional[str]) -> Optional[str]:
         """Validate and normalize base URL."""
-        if not v or not v.strip():
-            raise ValueError("base_url cannot be empty")
+        if v is None:
+            return v
+        if not v.strip():
+            return None
         # Remove trailing slash for consistency
         return v.rstrip("/")
 

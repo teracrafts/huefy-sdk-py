@@ -72,7 +72,7 @@ class HuefyClient:
         self._config = config or HuefyConfig()
         self._session = self._create_session()
 
-        logger.debug("HuefyClient initialized with base URL: %s", self._config.base_url)
+        logger.debug("HuefyClient initialized with endpoint: %s", self._config.get_http_endpoint())
 
     def _create_session(self) -> requests.Session:
         """Create and configure HTTP session."""
@@ -217,37 +217,13 @@ class HuefyClient:
         Raises:
             HuefyError: If the request fails
         """
-        # Use proxy if configured, otherwise direct API
-        if self._config.proxy_url:
-            url = self._config.proxy_url
-            # Create proxy request with configuration
-            proxy_data = {
-                "config": {
-                    "apiKey": self._api_key,
-                    "timeout": int((self._config.connect_timeout + self._config.read_timeout) * 1000),
-                    "retryConfig": {
-                        "enabled": self._config.retry_config.enabled,
-                        "max_retries": self._config.retry_config.max_retries,
-                        "backoff_factor": self._config.retry_config.backoff_factor,
-                        "max_delay": self._config.retry_config.max_delay,
-                    }
-                },
-                "method": method,
-                "endpoint": path,
-                "data": data
-            }
-            request_method = "POST"  # Always POST to proxy
-            request_data = proxy_data
-        else:
-            url = urljoin(self._config.base_url, path)
-            request_method = method
-            request_data = data
-        
+        url = urljoin(self._config.get_http_endpoint() + "/", path.lstrip("/"))
+
         try:
             response = self._session.request(
-                method=request_method,
+                method=method,
                 url=url,
-                json=request_data,
+                json=data if data else None,
                 timeout=(
                     self._config.connect_timeout,
                     self._config.read_timeout,
@@ -257,19 +233,7 @@ class HuefyClient:
             if response.status_code >= 400:
                 self._handle_error_response(response)
 
-            response_data = response.json()
-            
-            # Handle proxy response format
-            if self._config.proxy_url:
-                if not response_data.get("success", False):
-                    error_info = response_data.get("error", {})
-                    raise HuefyError(
-                        error_info.get("message", "Unknown proxy error"),
-                        error_info.get("code", "PROXY_ERROR")
-                    )
-                return response_data.get("data", {})
-            
-            return response_data
+            return response.json()
 
         except requests.exceptions.Timeout as e:
             raise TimeoutError("Request timed out") from e
