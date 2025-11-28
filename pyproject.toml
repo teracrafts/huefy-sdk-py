@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "teracrafts-huefy-sdk-python"
-version = "2.1.3"
+version = "2.1.4"
 description = "Official Python SDK for Huefy - App Mail Templates with dynamic email sending"
 readme = "README.md"
 requires-python = ">=3.8"
@@ -97,7 +97,7 @@ use_parentheses = true
 ensure_newline_before_comments = true
 
 [tool.mypy]
-python_version = "2.1.3"
+python_version = "2.1.4"
 warn_return_any = true
 warn_unused_configs = true
 disallow_untyped_defs = true
@@ -112,7 +112,7 @@ warn_unreachable = true
 strict_equality = true
 
 [tool.pytest.ini_options]
-minversion = "2.1.3"
+minversion = "2.1.4"
 addopts = "-ra -q --strict-markers --disable-warnings"
 testpaths = ["tests"]
 python_files = ["test_*.py", "*_test.py"]
