@@ -4,12 +4,12 @@ from __future__ import annotations
 
 import json
 import os
-import time
 from typing import Any
 
 import httpx
 
 from huefy.errors.huefy_error import HuefyError
+from huefy.errors.sanitizer import sanitize_error_message
 from huefy.http.circuit_breaker import CircuitBreaker, CircuitBreakerConfig
 from huefy.http.retry import RetryConfig, with_retry
 from huefy.utils.logger import Logger
@@ -179,7 +179,7 @@ class HttpClient:
             "timeout": timeout,
         }
         if body is not None:
-            request_kwargs["content"] = json.dumps(body)
+            request_kwargs["content"] = json.dumps(body, separators=(",", ":"), sort_keys=True)
             if "Content-Type" not in headers:
                 request_kwargs["headers"]["Content-Type"] = "application/json"
 
@@ -216,6 +216,12 @@ class HttpClient:
                 body = response.json()
             except (json.JSONDecodeError, ValueError):
                 body = {"message": response.text or "Unknown error"}
+
+            if self._enable_error_sanitization:
+                if "message" in body:
+                    body["message"] = sanitize_error_message(body["message"])
+                if "error" in body:
+                    body["error"] = sanitize_error_message(body["error"])
 
             raise HuefyError.from_response(
                 status_code=response.status_code,
