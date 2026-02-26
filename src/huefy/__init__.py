@@ -8,6 +8,31 @@ from huefy.http.circuit_breaker import CircuitBreaker, CircuitBreakerConfig, Cir
 from huefy.types.config import HuefyConfig
 from huefy.utils.version import SDK_VERSION, get_version
 
+# Email domain layer
+from huefy.huefy_client import HuefyEmailClient
+from huefy.types.email import (
+    EmailProvider,
+    SendEmailRequest,
+    SendEmailResponse,
+    BulkEmailResult,
+    HealthResponse,
+)
+from huefy.errors.huefy_errors import (
+    HuefyDomainError,
+    AuthenticationError,
+    TemplateNotFoundError,
+    InvalidTemplateDataError,
+    InvalidRecipientError,
+    ProviderError,
+    RateLimitError,
+    create_error_from_response,
+)
+from huefy.validators.email_validators import (
+    validate_email,
+    validate_template_key,
+    validate_send_email_input,
+)
+
 __all__ = [
     "HuefyClient",
     "HuefyConfig",
@@ -19,4 +44,22 @@ __all__ = [
     "CircuitOpenError",
     "SDK_VERSION",
     "get_version",
+    # Email domain layer
+    "HuefyEmailClient",
+    "EmailProvider",
+    "SendEmailRequest",
+    "SendEmailResponse",
+    "BulkEmailResult",
+    "HealthResponse",
+    "HuefyDomainError",
+    "AuthenticationError",
+    "TemplateNotFoundError",
+    "InvalidTemplateDataError",
+    "InvalidRecipientError",
+    "ProviderError",
+    "RateLimitError",
+    "create_error_from_response",
+    "validate_email",
+    "validate_template_key",
+    "validate_send_email_input",
 ]
