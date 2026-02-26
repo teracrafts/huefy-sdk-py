@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import asyncio
 import time
 from dataclasses import dataclass, field
 from enum import Enum
@@ -70,6 +71,7 @@ class CircuitBreaker:
         self._last_failure_time: float | None = None
         self._last_success_time: float | None = None
         self._opened_at: float | None = None
+        self._lock = asyncio.Lock()
 
     async def execute(self, fn: Callable[[], Awaitable[T]]) -> T:
         """Execute a function through the circuit breaker.
@@ -83,58 +85,69 @@ class CircuitBreaker:
         Raises:
             CircuitOpenError: If the circuit is open and not ready to transition.
         """
-        self._total_requests += 1
+        async with self._lock:
+            self._total_requests += 1
 
-        if self._state == CircuitState.OPEN:
-            if self._should_attempt_reset():
-                self._transition_to(CircuitState.HALF_OPEN)
-            else:
-                raise CircuitOpenError(
-                    message="Circuit breaker is open — requests are being rejected",
-                    reset_timeout=self._config.reset_timeout,
-                )
+            if self._state == CircuitState.OPEN:
+                if self._should_attempt_reset():
+                    self._transition_to(CircuitState.HALF_OPEN)
+                else:
+                    raise CircuitOpenError(
+                        message="Circuit breaker is open — requests are being rejected",
+                        reset_timeout=self._config.reset_timeout,
+                    )
 
-        if self._state == CircuitState.HALF_OPEN:
-            if self._half_open_requests >= self._config.half_open_requests:
-                raise CircuitOpenError(
-                    message="Circuit breaker is half-open — max probe requests reached",
-                    reset_timeout=self._config.reset_timeout,
-                )
-            self._half_open_requests += 1
+            if self._state == CircuitState.HALF_OPEN:
+                if self._half_open_requests >= self._config.half_open_requests:
+                    raise CircuitOpenError(
+                        message="Circuit breaker is half-open — max probe requests reached",
+                        reset_timeout=self._config.reset_timeout,
+                    )
+                self._half_open_requests += 1
 
+        # fn() runs outside the lock to avoid holding it during I/O
         try:
             result = await fn()
-            self._on_success()
-            return result
-        except Exception as exc:
-            self._on_failure()
+        except Exception:
+            async with self._lock:
+                self._on_failure()
             raise
 
-    def get_state(self) -> CircuitState:
+        async with self._lock:
+            self._on_success()
+        return result
+
+    async def get_state(self) -> CircuitState:
         """Get the current circuit breaker state."""
-        # Check if we should transition from OPEN to HALF_OPEN
-        if self._state == CircuitState.OPEN and self._should_attempt_reset():
-            self._transition_to(CircuitState.HALF_OPEN)
-        return self._state
+        async with self._lock:
+            # Check if we should transition from OPEN to HALF_OPEN
+            if self._state == CircuitState.OPEN and self._should_attempt_reset():
+                self._transition_to(CircuitState.HALF_OPEN)
+            return self._state
 
-    def reset(self) -> None:
+    async def reset(self) -> None:
         """Reset the circuit breaker to its initial closed state."""
-        self._state = CircuitState.CLOSED
-        self._failure_count = 0
-        self._success_count = 0
-        self._half_open_requests = 0
-        self._opened_at = None
+        async with self._lock:
+            self._state = CircuitState.CLOSED
+            self._failure_count = 0
+            self._success_count = 0
+            self._half_open_requests = 0
+            self._opened_at = None
 
-    def get_stats(self) -> CircuitBreakerStats:
+    async def get_stats(self) -> CircuitBreakerStats:
         """Get current circuit breaker statistics."""
-        return CircuitBreakerStats(
-            state=self.get_state(),
-            failure_count=self._failure_count,
-            success_count=self._success_count,
-            total_requests=self._total_requests,
-            last_failure_time=self._last_failure_time,
-            last_success_time=self._last_success_time,
-        )
+        async with self._lock:
+            # Check if we should transition from OPEN to HALF_OPEN
+            if self._state == CircuitState.OPEN and self._should_attempt_reset():
+                self._transition_to(CircuitState.HALF_OPEN)
+            return CircuitBreakerStats(
+                state=self._state,
+                failure_count=self._failure_count,
+                success_count=self._success_count,
+                total_requests=self._total_requests,
+                last_failure_time=self._last_failure_time,
+                last_success_time=self._last_success_time,
+            )
 
     def _on_success(self) -> None:
         """Handle a successful request."""
