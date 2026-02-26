@@ -19,20 +19,20 @@ class TestCalculateDelay:
 
     def test_first_attempt_is_near_base_delay(self) -> None:
         delay = calculate_delay(attempt=0, base_delay=1.0, max_delay=30.0)
-        # Base delay = 1.0, jitter adds up to 0.5, so range is [1.0, 1.5]
-        assert 1.0 <= delay <= 1.5
+        # Base delay = 1.0, multiplicative jitter [0.5, 1.0], so range is [0.5, 1.0]
+        assert 0.5 <= delay <= 1.0
 
     def test_delay_increases_with_attempts(self) -> None:
         delay_0 = calculate_delay(attempt=0, base_delay=1.0, max_delay=60.0)
         delay_2 = calculate_delay(attempt=2, base_delay=1.0, max_delay=60.0)
-        # With jitter, delay_2 should generally be larger, but check the base
-        # Attempt 2: base = 4.0, so min delay is 4.0
-        assert delay_2 >= 4.0
+        # With multiplicative jitter, attempt 2: base = 4.0, jitter [0.5, 1.0]
+        # so range is [2.0, 4.0]
+        assert delay_2 >= 2.0
 
     def test_delay_is_capped_at_max(self) -> None:
         delay = calculate_delay(attempt=10, base_delay=1.0, max_delay=5.0)
-        # Capped at 5.0 + up to 2.5 jitter = 7.5 max
-        assert delay <= 7.5
+        # Capped at max_delay=5.0 then multiplicative jitter [0.5, 1.0] = max 5.0
+        assert delay <= 5.0
 
 
 class TestParseRetryAfter:
