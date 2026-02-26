@@ -27,9 +27,9 @@ class TestPiiDetection:
         assert is_potential_pii_field("password") is True
         assert is_potential_pii_field("ssn") is True
         assert is_potential_pii_field("phone") is True
-        assert is_potential_pii_field("first_name") is True
         assert is_potential_pii_field("credit_card") is True
-        assert is_potential_pii_field("ip_address") is True
+        assert is_potential_pii_field("bank_account") is True
+        assert is_potential_pii_field("dateOfBirth") is True
 
     def test_does_not_flag_safe_fields(self) -> None:
         assert is_potential_pii_field("template_id") is False
@@ -51,12 +51,12 @@ class TestPiiDetection:
     def test_detect_pii_in_nested_dict(self) -> None:
         data = {
             "user": {
-                "first_name": "John",
+                "email_address": "john@example.com",
                 "preferences": {"theme": "dark"},
             }
         }
         findings = detect_potential_pii(data)
-        assert "user.first_name" in findings
+        assert "user.email_address" in findings
         assert len(findings) == 1
 
     def test_detect_pii_in_list_of_dicts(self) -> None:
@@ -188,11 +188,12 @@ class TestKeyUtilities:
         assert get_key_id("abc") == "abc"
 
     def test_is_server_key(self) -> None:
-        assert is_server_key("sk_live_123456") is True
-        assert is_server_key("sk-live-123456") is True
-        assert is_server_key("pk_live_123456") is False
+        assert is_server_key("srv_live_123456") is True
+        assert is_server_key("SRV_live_123456") is True
+        assert is_server_key("sdk_live_123456") is False
 
     def test_is_client_key(self) -> None:
-        assert is_client_key("pk_live_123456") is True
-        assert is_client_key("pk-live-123456") is True
-        assert is_client_key("sk_live_123456") is False
+        assert is_client_key("sdk_live_123456") is True
+        assert is_client_key("cli_live_123456") is True
+        assert is_client_key("CLI_live_123456") is True
+        assert is_client_key("srv_live_123456") is False
