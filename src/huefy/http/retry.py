@@ -3,8 +3,10 @@
 from __future__ import annotations
 
 import asyncio
+import email.utils
 import random
-from dataclasses import dataclass, field
+from dataclasses import dataclass
+from datetime import datetime, timezone
 from typing import Awaitable, Callable, TypeVar
 
 from huefy.utils.logger import Logger
@@ -25,7 +27,7 @@ class RetryConfig:
     max_retries: int = 3
     base_delay: float = 1.0
     max_delay: float = 30.0
-    retryable_status_codes: tuple[int, ...] = (429, 500, 502, 503, 504)
+    retryable_status_codes: tuple[int, ...] = (408, 429, 500, 502, 503, 504)
 
 
 def calculate_delay(attempt: int, base_delay: float, max_delay: float) -> float:
@@ -41,8 +43,8 @@ def calculate_delay(attempt: int, base_delay: float, max_delay: float) -> float:
     """
     exponential_delay = base_delay * (2 ** attempt)
     capped_delay = min(exponential_delay, max_delay)
-    jitter = random.uniform(0, capped_delay * 0.5)
-    return capped_delay + jitter
+    jitter_factor = random.uniform(0.5, 1.0)
+    return capped_delay * jitter_factor
 
 
 def parse_retry_after(header: str | None) -> float | None:
@@ -79,6 +81,16 @@ def parse_retry_after(header: str | None) -> float | None:
             return value_f
         return None
     except ValueError:
+        pass
+
+    # Try parsing as HTTP-date (RFC 7231)
+    try:
+        dt = email.utils.parsedate_to_datetime(header)
+        if dt.tzinfo is None:
+            dt = dt.replace(tzinfo=timezone.utc)
+        delay = (dt - datetime.now(timezone.utc)).total_seconds()
+        return max(0.0, delay)
+    except (TypeError, ValueError):
         pass
 
     return None
@@ -132,7 +144,8 @@ async def with_retry(
 
             await asyncio.sleep(delay)
 
-    assert last_exception is not None
+    if last_exception is None:
+        raise RuntimeError("retry loop completed without setting an exception")
     raise last_exception
 
 
