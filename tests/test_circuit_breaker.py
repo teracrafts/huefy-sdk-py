@@ -32,7 +32,7 @@ class TestCircuitBreakerClosed:
 
         result = await breaker.execute(ok)
         assert result == "ok"
-        assert breaker.get_state() == CircuitState.CLOSED
+        assert await breaker.get_state() == CircuitState.CLOSED
 
     async def test_failures_below_threshold_stay_closed(self, breaker: CircuitBreaker) -> None:
         async def fail() -> None:
@@ -42,7 +42,7 @@ class TestCircuitBreakerClosed:
             with pytest.raises(RuntimeError):
                 await breaker.execute(fail)
 
-        assert breaker.get_state() == CircuitState.CLOSED
+        assert await breaker.get_state() == CircuitState.CLOSED
 
     async def test_failures_at_threshold_open_circuit(self, breaker: CircuitBreaker) -> None:
         async def fail() -> None:
@@ -52,7 +52,7 @@ class TestCircuitBreakerClosed:
             with pytest.raises(RuntimeError):
                 await breaker.execute(fail)
 
-        assert breaker.get_state() == CircuitState.OPEN
+        assert await breaker.get_state() == CircuitState.OPEN
 
 
 class TestCircuitBreakerOpen:
@@ -79,12 +79,12 @@ class TestCircuitBreakerOpen:
             with pytest.raises(RuntimeError):
                 await breaker.execute(fail)
 
-        assert breaker.get_state() == CircuitState.OPEN
+        assert await breaker.get_state() == CircuitState.OPEN
 
         # Wait for reset timeout
         await asyncio.sleep(0.15)
 
-        assert breaker.get_state() == CircuitState.HALF_OPEN
+        assert await breaker.get_state() == CircuitState.HALF_OPEN
 
 
 class TestCircuitBreakerHalfOpen:
@@ -105,7 +105,7 @@ class TestCircuitBreakerHalfOpen:
 
         result = await breaker.execute(ok)
         assert result == "recovered"
-        assert breaker.get_state() == CircuitState.CLOSED
+        assert await breaker.get_state() == CircuitState.CLOSED
 
     async def test_failure_in_half_open_reopens_circuit(self, breaker: CircuitBreaker) -> None:
         async def fail() -> None:
@@ -120,7 +120,7 @@ class TestCircuitBreakerHalfOpen:
         with pytest.raises(RuntimeError):
             await breaker.execute(fail)
 
-        assert breaker.get_state() == CircuitState.OPEN
+        assert await breaker.get_state() == CircuitState.OPEN
 
 
 class TestCircuitBreakerReset:
@@ -134,10 +134,10 @@ class TestCircuitBreakerReset:
             with pytest.raises(RuntimeError):
                 await breaker.execute(fail)
 
-        assert breaker.get_state() == CircuitState.OPEN
+        assert await breaker.get_state() == CircuitState.OPEN
 
-        breaker.reset()
-        assert breaker.get_state() == CircuitState.CLOSED
+        await breaker.reset()
+        assert await breaker.get_state() == CircuitState.CLOSED
 
 
 class TestCircuitBreakerStats:
@@ -150,7 +150,7 @@ class TestCircuitBreakerStats:
         await breaker.execute(ok)
         await breaker.execute(ok)
 
-        stats = breaker.get_stats()
+        stats = await breaker.get_stats()
         assert stats.total_requests == 2
         assert stats.success_count == 2
         assert stats.failure_count == 0
