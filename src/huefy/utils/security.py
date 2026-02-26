@@ -5,7 +5,6 @@ from __future__ import annotations
 import hashlib
 import hmac
 import json
-import re
 import time
 from typing import Any
 
@@ -14,86 +13,37 @@ from huefy.utils.logger import Logger
 
 # ─── PII Detection ───────────────────────────────────────────────────────────
 
+# Normalized PII patterns (lowercase, no hyphens/underscores). Field names are
+# normalized the same way before substring matching, so these patterns match
+# regardless of separator style (e.g. "date_of_birth", "dateOfBirth", "date-of-birth").
 PII_PATTERNS: list[str] = [
-    # Names
-    "first_name", "firstname", "first",
-    "last_name", "lastname", "last",
-    "full_name", "fullname", "name",
-    "middle_name", "middlename",
-    "maiden_name",
-    "nickname", "alias",
-    "username", "user_name",
-    "display_name", "displayname",
-
-    # Contact
-    "email", "email_address", "emailaddress",
-    "phone", "phone_number", "phonenumber",
-    "telephone", "tel", "mobile", "cell",
-    "fax", "fax_number",
-
-    # Address
-    "address", "street", "street_address",
-    "city", "state", "province",
-    "zip", "zip_code", "zipcode", "postal_code", "postalcode",
-    "country", "region",
-    "address_line_1", "address_line_2",
-    "apartment", "suite", "unit",
-
-    # Identity
-    "ssn", "social_security", "social_security_number",
-    "national_id", "national_id_number",
-    "passport", "passport_number",
-    "drivers_license", "driver_license", "license_number",
-    "tax_id", "tax_number", "tin",
-    "ein", "employer_id",
-
-    # Financial
-    "credit_card", "creditcard", "card_number", "cardnumber",
-    "cvv", "cvc", "security_code",
-    "expiry", "expiration", "exp_date",
-    "bank_account", "account_number", "accountnumber",
-    "routing_number", "routingnumber",
-    "iban", "swift", "bic",
-
-    # Auth / Secrets
-    "password", "passwd", "pass",
-    "secret", "secret_key", "secretkey",
-    "api_key", "apikey",
-    "access_token", "accesstoken",
-    "refresh_token", "refreshtoken",
-    "auth_token", "authtoken",
-    "private_key", "privatekey",
-    "session_id", "sessionid",
-    "jwt", "bearer",
-
-    # Biometric / Health
-    "dob", "date_of_birth", "dateofbirth", "birthday", "birthdate",
-    "age", "gender", "sex",
-    "race", "ethnicity",
-    "medical_record", "health_id",
-    "blood_type", "diagnosis",
-    "insurance_number", "policy_number",
-
-    # Device / Network
-    "ip", "ip_address", "ipaddress",
-    "mac_address", "macaddress",
-    "device_id", "deviceid",
-    "imei", "imsi",
-    "geolocation", "latitude", "longitude", "lat", "lng", "lon",
+    "email", "phone", "telephone", "mobile",
+    "ssn", "socialsecurity",
+    "creditcard", "cardnumber", "cvv",
+    "password", "passwd", "secret", "token",
+    "apikey", "privatekey",
+    "accesstoken", "refreshtoken", "authtoken",
+    "address", "street", "zipcode", "postalcode",
+    "dateofbirth", "dob", "birthdate",
+    "passport", "driverlicense", "nationalid",
+    "bankaccount", "routingnumber", "iban", "swift",
 ]
 
 
 def is_potential_pii_field(field_name: str) -> bool:
     """Check if a field name matches a known PII pattern.
 
+    The field name is normalized by lowercasing and removing hyphens and
+    underscores before checking for substring matches against PII patterns.
+
     Args:
         field_name: The field name to check.
 
     Returns:
-        True if the field name matches a PII pattern.
+        True if the normalized field name contains any PII pattern as a substring.
     """
-    normalized = field_name.lower().strip()
-    return normalized in PII_PATTERNS
+    normalized = field_name.lower().replace("-", "").replace("_", "")
+    return any(pattern in normalized for pattern in PII_PATTERNS)
 
 
 def detect_potential_pii(
@@ -266,7 +216,7 @@ def get_key_id(api_key: str) -> str:
 def is_server_key(key: str) -> bool:
     """Check if an API key is a server-side key.
 
-    Server keys typically start with ``sk_`` or ``sk-``.
+    Server keys start with ``srv_``.
 
     Args:
         key: The API key to check.
@@ -274,13 +224,13 @@ def is_server_key(key: str) -> bool:
     Returns:
         True if the key appears to be a server key.
     """
-    return key.startswith("sk_") or key.startswith("sk-")
+    return key.lower().startswith("srv_")
 
 
 def is_client_key(key: str) -> bool:
     """Check if an API key is a client-side key.
 
-    Client keys typically start with ``pk_`` or ``pk-``.
+    Client keys start with ``sdk_`` or ``cli_``.
 
     Args:
         key: The API key to check.
@@ -288,4 +238,5 @@ def is_client_key(key: str) -> bool:
     Returns:
         True if the key appears to be a client key.
     """
-    return key.startswith("pk_") or key.startswith("pk-")
+    lower = key.lower()
+    return lower.startswith("sdk_") or lower.startswith("cli_")
