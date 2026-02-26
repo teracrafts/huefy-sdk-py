@@ -8,7 +8,6 @@ from huefy.http.http_client import HttpClient
 from huefy.http.retry import RetryConfig
 from huefy.http.circuit_breaker import CircuitBreakerConfig
 from huefy.utils.logger import Logger, create_logger
-from huefy.utils.security import warn_if_potential_pii
 
 
 class HuefyClient:
@@ -34,6 +33,8 @@ class HuefyClient:
     ) -> None:
         if not api_key:
             raise ValueError("api_key is required")
+        if timeout <= 0:
+            raise ValueError("timeout must be positive")
 
         self._api_key = api_key
         self._secondary_api_key = secondary_api_key
