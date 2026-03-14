@@ -49,16 +49,27 @@ def is_potential_pii_field(field_name: str) -> bool:
 def detect_potential_pii(
     data: dict[str, Any],
     prefix: str = "",
+    _visited: set[int] | None = None,
 ) -> list[str]:
     """Recursively detect fields in a dictionary that may contain PII.
 
     Args:
         data: The dictionary to scan.
         prefix: Prefix for nested field paths (used in recursion).
+        _visited: Internal set of object ids already visited (guards against
+            circular references causing infinite recursion).
 
     Returns:
         A list of dot-delimited field paths that match PII patterns.
     """
+    if _visited is None:
+        _visited = set()
+
+    data_id = id(data)
+    if data_id in _visited:
+        return []
+    _visited.add(data_id)
+
     findings: list[str] = []
 
     for key, value in data.items():
@@ -68,12 +79,12 @@ def detect_potential_pii(
             findings.append(full_path)
 
         if isinstance(value, dict):
-            findings.extend(detect_potential_pii(value, prefix=full_path))
+            findings.extend(detect_potential_pii(value, prefix=full_path, _visited=_visited))
         elif isinstance(value, list):
             for idx, item in enumerate(value):
                 if isinstance(item, dict):
                     findings.extend(
-                        detect_potential_pii(item, prefix=f"{full_path}[{idx}]")
+                        detect_potential_pii(item, prefix=f"{full_path}[{idx}]", _visited=_visited)
                     )
 
     return findings
