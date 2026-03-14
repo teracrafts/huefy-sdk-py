@@ -71,7 +71,16 @@ class CircuitBreaker:
         self._last_failure_time: float | None = None
         self._last_success_time: float | None = None
         self._opened_at: float | None = None
-        self._lock = asyncio.Lock()
+        # Lock is created lazily so that the CircuitBreaker can be instantiated
+        # outside an async context (e.g. at module level) without binding to a
+        # specific event loop.
+        self._lock: asyncio.Lock | None = None
+
+    def _get_lock(self) -> asyncio.Lock:
+        """Return the asyncio.Lock, creating it lazily on first async use."""
+        if self._lock is None:
+            self._lock = asyncio.Lock()
+        return self._lock
 
     async def execute(self, fn: Callable[[], Awaitable[T]]) -> T:
         """Execute a function through the circuit breaker.
@@ -85,7 +94,7 @@ class CircuitBreaker:
         Raises:
             CircuitOpenError: If the circuit is open and not ready to transition.
         """
-        async with self._lock:
+        async with self._get_lock():
             self._total_requests += 1
 
             if self._state == CircuitState.OPEN:
@@ -109,17 +118,17 @@ class CircuitBreaker:
         try:
             result = await fn()
         except Exception:
-            async with self._lock:
+            async with self._get_lock():
                 self._on_failure()
             raise
 
-        async with self._lock:
+        async with self._get_lock():
             self._on_success()
         return result
 
     async def get_state(self) -> CircuitState:
         """Get the current circuit breaker state."""
-        async with self._lock:
+        async with self._get_lock():
             # Check if we should transition from OPEN to HALF_OPEN
             if self._state == CircuitState.OPEN and self._should_attempt_reset():
                 self._transition_to(CircuitState.HALF_OPEN)
@@ -127,7 +136,7 @@ class CircuitBreaker:
 
     async def reset(self) -> None:
         """Reset the circuit breaker to its initial closed state."""
-        async with self._lock:
+        async with self._get_lock():
             self._state = CircuitState.CLOSED
             self._failure_count = 0
             self._success_count = 0
@@ -136,7 +145,7 @@ class CircuitBreaker:
 
     async def get_stats(self) -> CircuitBreakerStats:
         """Get current circuit breaker statistics."""
-        async with self._lock:
+        async with self._get_lock():
             # Check if we should transition from OPEN to HALF_OPEN
             if self._state == CircuitState.OPEN and self._should_attempt_reset():
                 self._transition_to(CircuitState.HALF_OPEN)
