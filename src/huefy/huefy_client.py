@@ -9,7 +9,9 @@ from .types.email import (
     EmailProvider,
     SendEmailRequest,
     SendEmailResponse,
-    BulkEmailResult,
+    BulkRecipient,
+    SendBulkEmailsRequest,
+    SendBulkEmailsResponse,
     HealthResponse,
 )
 from .validators.email_validators import (
@@ -63,48 +65,36 @@ class HuefyEmailClient(BaseClient):
 
     async def send_bulk_emails(
         self,
-        emails: List[Dict[str, Any]],
-    ) -> List[BulkEmailResult]:
-        count_err = validate_bulk_count(len(emails))
+        template_key: str,
+        recipients: List[BulkRecipient],
+        **options: Any,
+    ) -> SendBulkEmailsResponse:
+        count_err = validate_bulk_count(len(recipients))
         if count_err:
             raise HuefyDomainError(count_err, "VALIDATION_ERROR", 400)
 
-        requests = []
-        for email in emails:
-            errors = validate_send_email_input(
-                email.get("template_key", ""),
-                email.get("data", {}),
-                email.get("recipient", ""),
-            )
-            if errors:
+        for recipient in recipients:
+            if not recipient.email:
                 raise HuefyDomainError(
-                    f"Validation failed for {email.get('recipient', 'unknown')}: {'; '.join(errors)}",
+                    "Each recipient must have an email address",
                     "VALIDATION_ERROR",
                     400,
-                    {"validation_errors": errors},
                 )
-            bulk_provider = email.get("provider")
-            if bulk_provider is not None and not isinstance(bulk_provider, EmailProvider):  # type: ignore[unreachable]
-                valid_values = ", ".join(p.value for p in EmailProvider)
-                raise HuefyDomainError(
-                    f"Invalid provider for {email.get('recipient', 'unknown')}: {bulk_provider!r}. "
-                    f"Must be an EmailProvider enum value ({valid_values})",
-                    "VALIDATION_ERROR",
-                    400,
-                    {"valid_providers": [p.value for p in EmailProvider]},
-                )
-            req = SendEmailRequest(
-                template_key=email["template_key"].strip(),
-                recipient=email["recipient"].strip(),
-                data=email["data"],
-                provider=bulk_provider,
-            )
-            requests.append(req.to_dict())
+
+        request = SendBulkEmailsRequest(
+            templateKey=template_key.strip(),
+            recipients=recipients,
+            fromEmail=options.get("from_email"),
+            fromName=options.get("from_name"),
+            providerType=options.get("provider_type"),
+            batchSize=options.get("batch_size"),
+            metadata=options.get("metadata"),
+        )
 
         response = await self._http_client.request(
-            "/emails/bulk", method="POST", body={"emails": requests}
+            "/emails/send-bulk", method="POST", body=request.to_dict()
         )
-        return [BulkEmailResult.from_dict(r) for r in response.get("results", [])]
+        return SendBulkEmailsResponse.from_dict(response)
 
     async def email_health_check(self) -> HealthResponse:
         response = await self._http_client.request("/health", method="GET")
