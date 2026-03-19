@@ -4,7 +4,9 @@ from __future__ import annotations
 
 import json
 import os
-from typing import Any
+from dataclasses import dataclass
+from datetime import datetime, timezone
+from typing import Any, Callable, Optional
 
 import httpx
 
@@ -19,6 +21,15 @@ from huefy.utils.security import create_request_signature, get_key_id
 
 BASE_URL = "https://api.huefy.dev/api/v1/sdk"
 LOCAL_BASE_URL = "https://api.huefy.on/api/v1/sdk"
+
+
+@dataclass
+class RateLimitInfo:
+    """Parsed rate limit state from response headers."""
+
+    limit: int
+    remaining: int
+    reset_at: datetime
 
 
 class HttpClient:
@@ -38,6 +49,8 @@ class HttpClient:
         secondary_api_key: str | None = None,
         enable_request_signing: bool = False,
         enable_error_sanitization: bool = False,
+        on_rate_limit_update: Optional[Callable[[RateLimitInfo], None]] = None,
+        on_rate_limit_warning: Optional[Callable[[RateLimitInfo], None]] = None,
     ) -> None:
         self._api_key = api_key
         self._secondary_api_key = secondary_api_key
@@ -47,6 +60,8 @@ class HttpClient:
         self._logger = logger
         self._enable_request_signing = enable_request_signing
         self._enable_error_sanitization = enable_error_sanitization
+        self._on_rate_limit_update = on_rate_limit_update
+        self._on_rate_limit_warning = on_rate_limit_warning
 
         cb_config = circuit_breaker_config or CircuitBreakerConfig()
         self._circuit_breaker = CircuitBreaker(config=cb_config)
@@ -145,6 +160,7 @@ class HttpClient:
                         rotated_headers[key] = value
                 response = await self._send(url, method, rotated_headers, body, timeout)
 
+            self._parse_rate_limit_headers(response.headers)
             return self._handle_response(response)
 
         except httpx.TimeoutException as exc:
@@ -208,6 +224,30 @@ class HttpClient:
             headers.update(extra_headers)
 
         return headers
+
+    def _parse_rate_limit_headers(self, headers: httpx.Headers) -> None:
+        """Parse X-RateLimit-* headers and fire the configured callbacks."""
+        limit_str = headers.get("X-RateLimit-Limit")
+        remaining_str = headers.get("X-RateLimit-Remaining")
+        reset_str = headers.get("X-RateLimit-Reset")
+
+        if limit_str is None or remaining_str is None or reset_str is None:
+            return
+
+        try:
+            limit = int(limit_str)
+            remaining = int(remaining_str)
+            reset_at = datetime.fromtimestamp(int(reset_str), tz=timezone.utc)
+        except (ValueError, OSError):
+            return
+
+        info = RateLimitInfo(limit=limit, remaining=remaining, reset_at=reset_at)
+
+        if self._on_rate_limit_update is not None:
+            self._on_rate_limit_update(info)
+
+        if remaining < limit * 0.2 and self._on_rate_limit_warning is not None:
+            self._on_rate_limit_warning(info)
 
     def _handle_response(self, response: httpx.Response) -> dict[str, Any]:
         """Parse and validate the HTTP response."""
