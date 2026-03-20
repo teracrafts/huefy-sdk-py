@@ -25,8 +25,8 @@ class RetryConfig:
         retryable_status_codes: HTTP status codes that trigger a retry.
     """
     max_retries: int = 3
-    base_delay: float = 1.0
-    max_delay: float = 30.0
+    base_delay: float = 0.5
+    max_delay: float = 10.0
     retryable_status_codes: tuple[int, ...] = (408, 429, 500, 502, 503, 504)
 
 
@@ -43,7 +43,7 @@ def calculate_delay(attempt: int, base_delay: float, max_delay: float) -> float:
     """
     exponential_delay = base_delay * (2 ** attempt)
     capped_delay = min(exponential_delay, max_delay)
-    jitter_factor = random.uniform(0.5, 1.0)
+    jitter_factor = random.uniform(0.8, 1.2)
     return capped_delay * jitter_factor
 
 
