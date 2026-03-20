@@ -8,7 +8,7 @@ from typing import List, Optional, Dict
 EMAIL_REGEX = re.compile(r"^[^\s@]+@[^\s@]+\.[^\s@]+$")
 MAX_EMAIL_LENGTH = 254
 MAX_TEMPLATE_KEY_LENGTH = 100
-MAX_BULK_EMAILS = 100
+MAX_BULK_EMAILS = 1000
 
 
 def validate_email(email: str) -> Optional[str]:
