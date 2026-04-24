@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Any, Dict, List, Optional
+from typing import Dict, List, Optional
 
 from .client import HuefyClient as BaseClient
 from .types.email import (
@@ -27,6 +27,7 @@ class HuefyEmailClient(BaseClient):
 
     async def send_email(
         self,
+        *,
         template_key: str,
         data: Dict[str, str],
         recipient: str,
@@ -65,9 +66,10 @@ class HuefyEmailClient(BaseClient):
 
     async def send_bulk_emails(
         self,
+        *,
         template_key: str,
         recipients: List[BulkRecipient],
-        **options: Any,
+        provider: Optional[EmailProvider] = None,
     ) -> SendBulkEmailsResponse:
         count_err = validate_bulk_count(len(recipients))
         if count_err:
@@ -84,11 +86,7 @@ class HuefyEmailClient(BaseClient):
         request = SendBulkEmailsRequest(
             templateKey=template_key.strip(),
             recipients=recipients,
-            fromEmail=options.get("from_email"),
-            fromName=options.get("from_name"),
-            providerType=options.get("provider_type"),
-            batchSize=options.get("batch_size"),
-            metadata=options.get("metadata"),
+            providerType=provider.value if provider is not None else None,
         )
 
         response = await self._http_client.request(
