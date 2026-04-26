@@ -93,6 +93,27 @@ class SendEmailResponse:
 
 
 @dataclass
+class BulkEmailResult:
+    """Legacy bulk-email result shape kept for package compatibility."""
+    email: str
+    success: bool
+    error: Optional[Any] = None
+
+    @classmethod
+    def from_dict(cls, data: Dict[str, Any]) -> BulkEmailResult:
+        status = str(data.get("status", "")).lower()
+        success = data.get("success")
+        if success is None:
+            success = status in {"accepted", "delivered", "processed", "queued", "scheduled", "sent", "success"}
+
+        return cls(
+            email=data.get("email", ""),
+            success=bool(success),
+            error=data.get("error"),
+        )
+
+
+@dataclass
 class BulkRecipient:
     """A single recipient in a bulk email send."""
     email: str

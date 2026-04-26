@@ -5,11 +5,11 @@ Official Python SDK for [Huefy](https://huefy.dev) — transactional email deliv
 ## Installation
 
 ```bash
-pip install huefy-sdk
+pip install huefy
 # or with uv
-uv add huefy-sdk
+uv add huefy
 # or with poetry
-poetry add huefy-sdk
+poetry add huefy
 ```
 
 ## Requirements
@@ -24,13 +24,15 @@ import asyncio
 from huefy import HuefyEmailClient, HuefyConfig
 
 async def main():
-    async with HuefyEmailClient(HuefyConfig(api_key="sdk_your_api_key")) as client:
-        response = await client.send_email({
-            "template_key": "welcome-email",
-            "recipient": {"email": "alice@example.com", "name": "Alice"},
-            "variables": {"first_name": "Alice", "trial_days": 14},
-        })
-        print(response.message_id)
+    config = HuefyConfig(api_key="sdk_your_api_key")
+
+    async with HuefyEmailClient(**config.to_kwargs()) as client:
+        response = await client.send_email(
+            template_key="welcome-email",
+            recipient="alice@example.com",
+            data={"first_name": "Alice", "trial_days": "14"},
+        )
+        print(response.data.emailId)
 
 asyncio.run(main())
 ```
@@ -69,44 +71,45 @@ asyncio.run(main())
 ## Bulk Email
 
 ```python
-bulk = await client.send_bulk_emails({
-    "emails": [
-        {"template_key": "promo", "recipient": {"email": "bob@example.com"}},
-        {"template_key": "promo", "recipient": {"email": "carol@example.com"}},
-    ]
-})
+from huefy import BulkRecipient
 
-print(f"Sent: {bulk.total_sent}, Failed: {bulk.total_failed}")
+bulk = await client.send_bulk_emails(
+    template_key="promo",
+    recipients=[
+        BulkRecipient(email="bob@example.com"),
+        BulkRecipient(email="carol@example.com"),
+    ],
+)
+
+print(f"Sent: {bulk.data.successCount}, Failed: {bulk.data.failureCount}")
 ```
 
 ## Error Handling
 
 ```python
 from huefy import (
+    AuthenticationError,
+    CircuitOpenError,
     HuefyEmailClient,
     HuefyConfig,
     HuefyError,
-    HuefyAuthError,
-    HuefyRateLimitError,
-    HuefyCircuitOpenError,
-    HuefyNetworkError,
+    RateLimitError,
 )
 
-async with HuefyEmailClient(HuefyConfig(api_key="sdk_your_api_key")) as client:
+async with HuefyEmailClient(**HuefyConfig(api_key="sdk_your_api_key").to_kwargs()) as client:
     try:
-        response = await client.send_email({
-            "template_key": "order-confirmation",
-            "recipient": {"email": "user@example.com"},
-        })
-        print("Delivered:", response.message_id)
-    except HuefyAuthError:
+        response = await client.send_email(
+            template_key="order-confirmation",
+            recipient="user@example.com",
+            data={},
+        )
+        print("Delivered:", response.data.emailId)
+    except AuthenticationError:
         print("Invalid API key")
-    except HuefyRateLimitError as e:
+    except RateLimitError as e:
         print(f"Rate limited. Retry after {e.retry_after}s")
-    except HuefyCircuitOpenError:
+    except CircuitOpenError:
         print("Circuit open — service unavailable, backing off")
-    except HuefyNetworkError as e:
-        print("Network error:", e)
     except HuefyError as e:
         print(f"Huefy error [{e.code}]: {e}")
 ```
@@ -115,32 +118,32 @@ async with HuefyEmailClient(HuefyConfig(api_key="sdk_your_api_key")) as client:
 
 | Class | Code | Meaning |
 |-------|------|---------|
-| `HuefyInitError` | 1001 | Client failed to initialise |
-| `HuefyAuthError` | 1102 | API key rejected |
-| `HuefyNetworkError` | 1201 | Upstream request failed |
-| `HuefyCircuitOpenError` | 1301 | Circuit breaker tripped |
-| `HuefyRateLimitError` | 2003 | Rate limit exceeded |
-| `HuefyTemplateMissingError` | 2005 | Template key not found |
+| `AuthenticationError` | `INVALID_API_KEY` | API key rejected |
+| `RateLimitError` | `RATE_LIMIT_EXCEEDED` | Rate limit exceeded |
+| `TemplateNotFoundError` | `TEMPLATE_NOT_FOUND` | Template key not found |
+| `HuefyError` | `ErrorCode.*` | Transport or HTTP-layer SDK failure |
 
 ## Health Check
 
 ```python
 health = await client.health_check()
-if health.status != "healthy":
-    print("Huefy degraded:", health.status)
+if health["data"]["status"] != "healthy":
+    print("Huefy degraded:", health["data"]["status"])
 ```
 
 ## Local Development
 
-Set `HUEFY_MODE=local` to point the SDK at a local Huefy server, or override `base_url` directly:
+`HUEFY_MODE=local` resolves to `https://api.huefy.on/api/v1/sdk` in the current SDK. To target localhost, override `base_url` directly:
 
 ```python
 from huefy import HuefyEmailClient, HuefyConfig
 
-client = HuefyEmailClient(HuefyConfig(
+config = HuefyConfig(
     api_key="sdk_local_key",
     base_url="http://localhost:3000/api/v1/sdk",
-))
+)
+
+client = HuefyEmailClient(**config.to_kwargs())
 ```
 
 ## Developer Guide
