@@ -7,9 +7,10 @@ from unittest.mock import AsyncMock, patch
 import pytest
 
 from huefy.client import HuefyClient
+from huefy.errors.huefy_errors import HuefyDomainError
 from huefy.huefy_client import HuefyEmailClient
 from huefy.http.retry import RetryConfig
-from huefy.types import EmailRecipient
+from huefy.types import BulkRecipient, EmailRecipient
 from huefy.utils.logger import NoopLogger
 
 
@@ -125,6 +126,30 @@ class TestEmailClientSendEmail:
                     "recipient": "user@example.com",
                     "data": {"first_name": "Ada"},
                 },
+            )
+
+        await client.close()
+
+
+class TestEmailClientSendBulkEmails:
+    async def test_send_bulk_emails_rejects_blank_template_key(self) -> None:
+        client = HuefyEmailClient(api_key="sk_test_send_bulk")
+
+        with pytest.raises(HuefyDomainError, match="Template key"):
+            await client.send_bulk_emails(
+                template_key="   ",
+                recipients=[BulkRecipient(email="user@example.com")],
+            )
+
+        await client.close()
+
+    async def test_send_bulk_emails_rejects_invalid_recipient_type(self) -> None:
+        client = HuefyEmailClient(api_key="sk_test_send_bulk")
+
+        with pytest.raises(HuefyDomainError, match=r"recipients\[0\].*Recipient type"):
+            await client.send_bulk_emails(
+                template_key="welcome-email",
+                recipients=[BulkRecipient(email="user@example.com", type="reply-to")],
             )
 
         await client.close()

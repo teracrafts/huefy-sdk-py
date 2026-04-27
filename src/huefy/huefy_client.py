@@ -18,6 +18,8 @@ from .types.email import (
 from .validators.email_validators import (
     validate_send_email_input,
     validate_bulk_count,
+    validate_bulk_recipient,
+    validate_template_key,
 )
 from .errors.huefy_errors import HuefyDomainError
 from .utils.security import warn_if_potential_pii
@@ -80,17 +82,36 @@ class HuefyEmailClient(BaseClient):
         if count_err:
             raise HuefyDomainError(count_err, "VALIDATION_ERROR", 400)
 
-        for recipient in recipients:
-            if not recipient.email:
+        template_err = validate_template_key(template_key)
+        if template_err:
+            raise HuefyDomainError(template_err, "VALIDATION_ERROR", 400)
+
+        normalized_recipients: List[BulkRecipient] = []
+        for i, recipient in enumerate(recipients):
+            recipient_err = validate_bulk_recipient(
+                EmailRecipient(
+                    email=recipient.email,
+                    type=recipient.type,
+                    data=recipient.data,
+                )
+            )
+            if recipient_err:
                 raise HuefyDomainError(
-                    "Each recipient must have an email address",
+                    f"recipients[{i}]: {recipient_err}",
                     "VALIDATION_ERROR",
                     400,
                 )
+            normalized_recipients.append(
+                BulkRecipient(
+                    email=recipient.email.strip(),
+                    type=recipient.type.strip().lower(),
+                    data=recipient.data,
+                )
+            )
 
         request = SendBulkEmailsRequest(
             templateKey=template_key.strip(),
-            recipients=recipients,
+            recipients=normalized_recipients,
             providerType=provider.value if provider is not None else None,
         )
 

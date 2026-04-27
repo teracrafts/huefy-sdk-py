@@ -85,3 +85,10 @@ def validate_send_email_input(
     if email_err:
         errors.append(email_err)
     return errors
+
+
+def validate_bulk_recipient(recipient: Any) -> Optional[str]:
+    if not isinstance(recipient, EmailRecipient):
+        return "Recipient must be an EmailRecipient"
+
+    return validate_recipient(recipient)
