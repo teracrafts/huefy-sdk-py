@@ -37,6 +37,22 @@ async def main():
 asyncio.run(main())
 ```
 
+`recipient` can also be a structured object when you need recipient-specific template data or a non-default recipient type:
+
+```python
+from huefy import EmailRecipient
+
+response = await client.send_email(
+    template_key="welcome-email",
+    recipient=EmailRecipient(
+        email="reviewer@example.com",
+        type="cc",
+        data={"locale": "en"},
+    ),
+    data={"first_name": "Alice"},
+)
+```
+
 ## Key Features
 
 - **Fully async** — built on `httpx` with `async`/`await` throughout
@@ -133,14 +149,14 @@ if health["data"]["status"] != "healthy":
 
 ## Local Development
 
-`HUEFY_MODE=local` resolves to `https://api.huefy.on/api/v1/sdk` in the current SDK. To target localhost, override `base_url` directly:
+`HUEFY_MODE=local` resolves to `https://api.huefy.on/api/v1/sdk`. To bypass Caddy and hit the raw app port directly, override `base_url` to `http://localhost:8080/api/v1/sdk`:
 
 ```python
 from huefy import HuefyEmailClient, HuefyConfig
 
 config = HuefyConfig(
     api_key="sdk_local_key",
-    base_url="http://localhost:3000/api/v1/sdk",
+    base_url="https://api.huefy.on/api/v1/sdk",
 )
 
 client = HuefyEmailClient(**config.to_kwargs())

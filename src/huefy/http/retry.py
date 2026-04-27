@@ -44,7 +44,7 @@ def calculate_delay(attempt: int, base_delay: float, max_delay: float) -> float:
     exponential_delay = base_delay * (2 ** attempt)
     capped_delay = min(exponential_delay, max_delay)
     jitter_factor = random.uniform(0.8, 1.2)
-    return capped_delay * jitter_factor
+    return min(capped_delay * jitter_factor, max_delay)
 
 
 def parse_retry_after(header: str | None) -> float | None:

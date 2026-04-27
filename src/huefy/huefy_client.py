@@ -2,11 +2,12 @@
 
 from __future__ import annotations
 
-from typing import Dict, List, Optional
+from typing import Any, Dict, List, Optional, Union
 
 from .client import HuefyClient as BaseClient
 from .types.email import (
     EmailProvider,
+    EmailRecipient,
     SendEmailRequest,
     SendEmailResponse,
     BulkRecipient,
@@ -29,8 +30,8 @@ class HuefyEmailClient(BaseClient):
         self,
         *,
         template_key: str,
-        data: Dict[str, str],
-        recipient: str,
+        data: Dict[str, Any],
+        recipient: Union[str, EmailRecipient],
         provider: Optional[EmailProvider] = None,
     ) -> SendEmailResponse:
         errors = validate_send_email_input(template_key, data, recipient)
@@ -53,9 +54,13 @@ class HuefyEmailClient(BaseClient):
 
         warn_if_potential_pii(data, "template data", self._logger)
 
+        normalized_recipient = _normalize_recipient(recipient)
+        if isinstance(normalized_recipient, EmailRecipient) and normalized_recipient.data:
+            warn_if_potential_pii(normalized_recipient.data, "recipient template data", self._logger)
+
         request = SendEmailRequest(
             template_key=template_key.strip(),
-            recipient=recipient.strip(),
+            recipient=normalized_recipient,
             data=data,
             provider=provider,
         )
@@ -97,3 +102,14 @@ class HuefyEmailClient(BaseClient):
     async def email_health_check(self) -> HealthResponse:
         response = await self._http_client.request("/health", method="GET")
         return HealthResponse.from_dict(response)
+
+
+def _normalize_recipient(recipient: Union[str, EmailRecipient]) -> Union[str, EmailRecipient]:
+    if isinstance(recipient, str):
+        return recipient.strip()
+
+    return EmailRecipient(
+        email=recipient.email.strip(),
+        type=recipient.type.strip().lower() if isinstance(recipient.type, str) else recipient.type,
+        data=recipient.data,
+    )

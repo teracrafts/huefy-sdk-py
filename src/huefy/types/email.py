@@ -2,10 +2,9 @@
 
 from __future__ import annotations
 
-import re
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from enum import Enum
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Union
 
 
 class EmailProvider(str, Enum):
@@ -17,17 +16,41 @@ class EmailProvider(str, Enum):
 
 
 @dataclass
-class SendEmailRequest:
-    """Request to send a single email."""
-    template_key: str
-    recipient: str
-    data: Dict[str, str]
-    provider: Optional[EmailProvider] = None
+class EmailRecipient:
+    """A structured single-email recipient."""
+    email: str
+    type: Optional[str] = None
+    data: Optional[Dict[str, Any]] = None
 
     def to_dict(self) -> Dict[str, Any]:
         result: Dict[str, Any] = {
+            "email": self.email,
+        }
+        if self.type is not None:
+            result["type"] = self.type.strip().lower()
+        if self.data is not None:
+            result["data"] = self.data
+        return result
+
+
+@dataclass
+class SendEmailRequest:
+    """Request to send a single email."""
+    template_key: str
+    recipient: Union[str, EmailRecipient]
+    data: Dict[str, Any]
+    provider: Optional[EmailProvider] = None
+
+    def to_dict(self) -> Dict[str, Any]:
+        recipient: Union[str, Dict[str, Any]]
+        if isinstance(self.recipient, EmailRecipient):
+            recipient = self.recipient.to_dict()
+        else:
+            recipient = self.recipient
+
+        result: Dict[str, Any] = {
             "templateKey": self.template_key,
-            "recipient": self.recipient,
+            "recipient": recipient,
             "data": self.data,
         }
         if self.provider is not None:
@@ -123,7 +146,7 @@ class BulkRecipient:
     def to_dict(self) -> Dict[str, Any]:
         result: Dict[str, Any] = {
             "email": self.email,
-            "type": self.type,
+            "type": self.type.strip().lower(),
         }
         if self.data is not None:
             result["data"] = self.data

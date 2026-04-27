@@ -88,7 +88,7 @@ async def run() -> None:
     # 7. Health check
     import os
     base_url = (
-        "http://localhost:3000/api/v1/sdk"
+        "https://api.huefy.on/api/v1/sdk"
         if os.environ.get("HUEFY_MODE") == "local"
         else "https://api.huefy.dev/api/v1/sdk"
     )

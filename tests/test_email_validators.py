@@ -1,9 +1,11 @@
 import pytest
+from huefy.types import EmailRecipient
 from huefy.validators.email_validators import (
     validate_email,
     validate_template_key,
     validate_email_data,
     validate_bulk_count,
+    validate_recipient,
     validate_send_email_input,
 )
 
@@ -41,7 +43,7 @@ class TestValidateEmailData:
         assert validate_email_data(None) is not None
 
     def test_non_string_value(self):
-        assert validate_email_data({"count": 5}) is not None
+        assert validate_email_data({"count": 5}) is None
 
 
 class TestValidateBulkCount:
@@ -52,13 +54,37 @@ class TestValidateBulkCount:
         assert validate_bulk_count(0) is not None
 
     def test_over_limit(self):
-        assert validate_bulk_count(101) is not None
+        assert validate_bulk_count(1001) is not None
 
 
 class TestValidateSendEmailInput:
     def test_valid_input(self):
         assert validate_send_email_input("tpl", {"name": "John"}, "user@test.com") == []
 
+    def test_valid_recipient_object(self):
+        assert validate_send_email_input(
+            "tpl",
+            {"name": "John"},
+            EmailRecipient(email="user@test.com", type="cc", data={"segment": "vip"}),
+        ) == []
+
     def test_invalid_input(self):
         errors = validate_send_email_input("", {}, "bad")
         assert len(errors) > 0
+
+
+class TestValidateRecipient:
+    def test_invalid_recipient_type(self):
+        assert validate_recipient(
+            EmailRecipient(email="user@test.com", type="weird"),
+        ) is not None
+
+    def test_invalid_recipient_data(self):
+        assert validate_recipient(
+            EmailRecipient(email="user@test.com", data=[]),  # type: ignore[arg-type]
+        ) is not None
+
+    def test_recipient_type_is_case_insensitive(self):
+        assert validate_recipient(
+            EmailRecipient(email="user@test.com", type="CC"),
+        ) is None

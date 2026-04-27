@@ -12,6 +12,7 @@ from huefy.utils.version import SDK_VERSION, get_version
 from huefy.huefy_client import HuefyEmailClient
 from huefy.types.email import (
     EmailProvider,
+    EmailRecipient,
     SendEmailRequest,
     SendEmailResponse,
     BulkRecipient,
@@ -50,6 +51,7 @@ __all__ = [
     # Email domain layer
     "HuefyEmailClient",
     "EmailProvider",
+    "EmailRecipient",
     "SendEmailRequest",
     "SendEmailResponse",
     "BulkRecipient",

@@ -7,7 +7,9 @@ from unittest.mock import AsyncMock, patch
 import pytest
 
 from huefy.client import HuefyClient
+from huefy.huefy_client import HuefyEmailClient
 from huefy.http.retry import RetryConfig
+from huefy.types import EmailRecipient
 from huefy.utils.logger import NoopLogger
 
 
@@ -88,5 +90,121 @@ class TestClientHealthCheck:
             result = await client.health_check()
             mock_request.assert_called_once_with("/health", method="GET")
             assert result["status"] == "ok"
+
+        await client.close()
+
+
+class TestEmailClientSendEmail:
+    """Tests for the email client send_email method."""
+
+    async def test_send_email_preserves_string_recipient(self) -> None:
+        client = HuefyEmailClient(api_key="sk_test_send_email")
+        mock_response = {
+            "success": True,
+            "correlationId": "corr-123",
+            "data": {
+                "emailId": "email-1",
+                "status": "queued",
+                "recipients": [{"email": "user@example.com", "status": "queued"}],
+            },
+        }
+
+        with patch.object(
+            client._http_client, "request", new_callable=AsyncMock, return_value=mock_response
+        ) as mock_request:
+            await client.send_email(
+                template_key="welcome-email",
+                recipient=" user@example.com ",
+                data={"first_name": "Ada"},
+            )
+            mock_request.assert_called_once_with(
+                "/emails/send",
+                method="POST",
+                body={
+                    "templateKey": "welcome-email",
+                    "recipient": "user@example.com",
+                    "data": {"first_name": "Ada"},
+                },
+            )
+
+        await client.close()
+
+    async def test_send_email_serializes_recipient_object(self) -> None:
+        client = HuefyEmailClient(api_key="sk_test_send_email")
+        mock_response = {
+            "success": True,
+            "correlationId": "corr-123",
+            "data": {
+                "emailId": "email-1",
+                "status": "queued",
+                "recipients": [{"email": "user@example.com", "status": "queued"}],
+            },
+        }
+
+        with patch.object(
+            client._http_client, "request", new_callable=AsyncMock, return_value=mock_response
+        ) as mock_request:
+            await client.send_email(
+                template_key="welcome-email",
+                recipient=EmailRecipient(
+                    email=" user@example.com ",
+                    type="cc",
+                    data={"locale": "en"},
+                ),
+                data={"first_name": "Ada"},
+            )
+            mock_request.assert_called_once_with(
+                "/emails/send",
+                method="POST",
+                body={
+                    "templateKey": "welcome-email",
+                    "recipient": {
+                        "email": "user@example.com",
+                        "type": "cc",
+                        "data": {"locale": "en"},
+                    },
+                    "data": {"first_name": "Ada"},
+                },
+            )
+
+        await client.close()
+
+    async def test_send_email_normalizes_recipient_type(self) -> None:
+        client = HuefyEmailClient(api_key="sk_test_send_email")
+        mock_response = {
+            "success": True,
+            "correlationId": "corr-123",
+            "data": {
+                "emailId": "email-1",
+                "status": "queued",
+                "recipients": [{"email": "user@example.com", "status": "queued"}],
+            },
+        }
+
+        with patch.object(
+            client._http_client, "request", new_callable=AsyncMock, return_value=mock_response
+        ) as mock_request:
+            await client.send_email(
+                template_key="welcome-email",
+                recipient=EmailRecipient(
+                    email=" user@example.com ",
+                    type="CC",
+                    data={"locale": "en"},
+                ),
+                data={"first_name": "Ada"},
+            )
+            mock_request.assert_called_once_with(
+                "/emails/send",
+                method="POST",
+                body={
+                    "templateKey": "welcome-email",
+                    "recipient": {
+                        "email": "user@example.com",
+                        "type": "cc",
+                        "data": {"locale": "en"},
+                    },
+                    "data": {"first_name": "Ada"},
+                },
+            )
 
         await client.close()

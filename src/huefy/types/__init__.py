@@ -2,6 +2,7 @@
 
 from huefy.types.email import (
     EmailProvider,
+    EmailRecipient,
     SendEmailRequest,
     SendEmailResponse,
     BulkRecipient,
@@ -13,6 +14,7 @@ from huefy.types.email import (
 
 __all__ = [
     "EmailProvider",
+    "EmailRecipient",
     "SendEmailRequest",
     "SendEmailResponse",
     "BulkRecipient",
