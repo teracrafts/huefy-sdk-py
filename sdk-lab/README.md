@@ -1,20 +1,26 @@
 # Huefy Python SDK Lab
 
-Internal integration verification script. Tests the SDK without making real network calls, except for the health-check path.
+Verifies the core email contract through the real `HuefyEmailClient` without sending live email.
 
-## Usage
+## Run
 
 ```bash
-python sdk-lab/run.py
+python3 sdk-lab/run.py
 ```
 
-## What it tests
+from `sdks/python/`.
 
-1. Initialization — create `HuefyEmailClient` with a dummy API key
-2. Config validation — empty API key raises an error
-3. HMAC signing — `sign_payload` returns a 64-char hex signature
-4. Error sanitization — IP addresses and emails are redacted
-5. PII detection — `detect_potential_pii` identifies sensitive fields
-6. Circuit breaker state — initial state is `CLOSED`
-7. Health check — invokes `/health` against the configured base URL
-8. Cleanup — `close()` runs without error
+## Scenarios
+
+1. Initialization
+2. Single email contract
+3. Bulk email contract
+4. Validation rejects invalid single recipient
+5. Validation rejects invalid bulk request
+6. Health check path
+7. Cleanup
+
+## Notes
+
+- The lab injects a local stub HTTP client.
+- It verifies request shaping, parsed responses, and validation-before-transport behavior.
