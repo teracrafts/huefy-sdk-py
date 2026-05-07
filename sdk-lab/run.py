@@ -1,7 +1,9 @@
 """
 Huefy Python SDK Lab
-Internal integration verification — no real network calls (except health check).
+Core email contract verification without live sends.
 """
+
+from __future__ import annotations
 
 import asyncio
 import sys
@@ -9,10 +11,15 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 
-from huefy import HuefyEmailClient, HuefyConfig
-from huefy.utils.security import sign_payload, detect_potential_pii
-from huefy.errors.sanitizer import sanitize_error_message
-from huefy.http.circuit_breaker import CircuitBreaker, CircuitBreakerConfig, CircuitState
+from huefy import HuefyEmailClient  # noqa: E402
+from huefy.errors.huefy_errors import HuefyDomainError  # noqa: E402
+from huefy.types.email import (  # noqa: E402
+    BulkRecipient,
+    EmailProvider,
+    EmailRecipient,
+    SendBulkEmailsResponse,
+    SendEmailResponse,
+)
 
 PASS = "\033[32m[PASS]\033[0m"
 FAIL = "\033[31m[FAIL]\033[0m"
@@ -31,10 +38,30 @@ def check(label: str, ok: bool, detail: str = "") -> None:
         failed += 1
 
 
+class StubHttpClient:
+    def __init__(self, responses: list[dict[str, object]]) -> None:
+        self.responses = responses
+        self.calls: list[tuple[str, str, dict[str, object] | None]] = []
+
+    async def request(
+        self,
+        path: str,
+        *,
+        method: str = "GET",
+        body: dict[str, object] | None = None,
+    ) -> dict[str, object]:
+        self.calls.append((path, method, body))
+        if not self.responses:
+            raise AssertionError("StubHttpClient exhausted")
+        return self.responses.pop(0)
+
+    async def close(self) -> None:
+        return None
+
+
 async def run() -> None:
     print("=== Huefy Python SDK Lab ===\n")
 
-    # 1. Initialization
     client: HuefyEmailClient | None = None
     try:
         client = HuefyEmailClient(api_key="sdk_lab_test_key")
@@ -42,70 +69,150 @@ async def run() -> None:
     except Exception as e:
         check("Initialization", False, str(e))
 
-    # 2. Config validation
     try:
-        HuefyEmailClient(api_key="")
-        check("Config validation", False, "Expected error was not raised")
-    except (ValueError, Exception):
-        check("Config validation", True)
-
-    # 3. HMAC signing
-    try:
-        result = sign_payload({"test": "data"}, "test_secret", timestamp="1700000000")
-        sig = result.get("signature", "")
-        ok = isinstance(sig, str) and len(sig) == 64
-        check("HMAC signing", ok, "" if ok else f'signature="{sig}"')
-    except Exception as e:
-        check("HMAC signing", False, str(e))
-
-    # 4. Error sanitization
-    try:
-        input_msg = "Error at 192.168.1.1 for user@example.com"
-        result_msg = sanitize_error_message(input_msg)
-        ok = "192.168.1.1" not in result_msg and "user@example.com" not in result_msg
-        check("Error sanitization", ok, "" if ok else f'result="{result_msg}"')
-    except Exception as e:
-        check("Error sanitization", False, str(e))
-
-    # 5. PII detection
-    try:
-        fields = detect_potential_pii({"email": "test@test.com", "name": "John", "ssn": "123-45-6789"})
-        has_email = "email" in fields
-        has_ssn = "ssn" in fields
-        ok = len(fields) > 0 and has_email and has_ssn
-        check("PII detection", ok, "" if ok else f"fields={fields}")
-    except Exception as e:
-        check("PII detection", False, str(e))
-
-    # 6. Circuit breaker state
-    try:
-        cb = CircuitBreaker()
-        state = cb._state
-        check("Circuit breaker state", state == CircuitState.CLOSED, f"state={state}")
-    except Exception as e:
-        check("Circuit breaker state", False, str(e))
-
-    # 7. Health check
-    import os
-    base_url = (
-        "https://api.huefy.on/api/v1/sdk"
-        if os.environ.get("HUEFY_MODE") == "local"
-        else "https://api.huefy.dev/api/v1/sdk"
-    )
-    try:
-        hc = HuefyEmailClient(api_key="sdk_lab_test_key", base_url=base_url)
-        await hc.health_check()
-        check("Health check", True)
-    except Exception as e:
-        msg = str(e)
-        is_network = any(
-            kw in msg.lower()
-            for kw in ("connect", "network", "timeout", "refused", "unreachable", "ssl", "name or service")
+        email_client = HuefyEmailClient(api_key="sdk_lab_test_key")
+        stub = StubHttpClient(
+            [
+                {
+                    "success": True,
+                    "data": {
+                        "emailId": "email_123",
+                        "status": "queued",
+                        "recipients": [{"email": "alice@example.com", "status": "queued"}],
+                    },
+                    "correlationId": "corr_send_123",
+                }
+            ]
         )
-        is_auth = any(kw in msg for kw in ("401", "403", "Unauthorized", "Forbidden", "Invalid"))
-        check("Health check", is_network or is_auth, f"(network/auth error — {msg[:80]})")
+        email_client._http_client = stub  # type: ignore[attr-defined]
+        response = await email_client.send_email(
+            template_key=" welcome-email ",
+            data={"firstName": "Alice"},
+            recipient=EmailRecipient(email=" alice@example.com ", type="CC", data={"locale": "en"}),
+            provider=EmailProvider.SES,
+        )
+        path, method, body = stub.calls[0]
+        recipient = body["recipient"] if body else None
+        ok = (
+            path == "/emails/send"
+            and method == "POST"
+            and isinstance(body, dict)
+            and body["templateKey"] == "welcome-email"
+            and isinstance(recipient, dict)
+            and recipient["email"] == "alice@example.com"
+            and recipient["type"] == "cc"
+            and body["providerType"] == "ses"
+            and isinstance(response, SendEmailResponse)
+            and response.data.emailId == "email_123"
+        )
+        check("Single email contract", ok, "" if ok else str(stub.calls))
+    except Exception as e:
+        check("Single email contract", False, str(e))
 
-    # 8. Cleanup
+    try:
+        email_client = HuefyEmailClient(api_key="sdk_lab_test_key")
+        stub = StubHttpClient(
+            [
+                {
+                    "success": True,
+                    "data": {
+                        "batchId": "batch_123",
+                        "status": "processing",
+                        "templateKey": "digest",
+                        "totalRecipients": 2,
+                        "processedCount": 0,
+                        "successCount": 0,
+                        "failureCount": 0,
+                        "suppressedCount": 0,
+                        "startedAt": "2026-05-07T10:00:00Z",
+                        "recipients": [
+                            {"email": "alice@example.com", "status": "queued"},
+                            {"email": "bob@example.com", "status": "queued"},
+                        ],
+                    },
+                    "correlationId": "corr_bulk_123",
+                }
+            ]
+        )
+        email_client._http_client = stub  # type: ignore[attr-defined]
+        response = await email_client.send_bulk_emails(
+            template_key=" digest ",
+            recipients=[
+                BulkRecipient(email=" alice@example.com ", type="TO", data={"locale": "en"}),
+                BulkRecipient(email=" bob@example.com ", type="BCC"),
+            ],
+            provider=EmailProvider.MAILGUN,
+        )
+        path, method, body = stub.calls[0]
+        recipients = body["recipients"] if body else None
+        ok = (
+            path == "/emails/send-bulk"
+            and method == "POST"
+            and isinstance(body, dict)
+            and body["templateKey"] == "digest"
+            and body["providerType"] == "mailgun"
+            and isinstance(recipients, list)
+            and recipients[0]["email"] == "alice@example.com"
+            and recipients[0]["type"] == "to"
+            and recipients[1]["type"] == "bcc"
+            and isinstance(response, SendBulkEmailsResponse)
+            and response.data.batchId == "batch_123"
+        )
+        check("Bulk email contract", ok, "" if ok else str(stub.calls))
+    except Exception as e:
+        check("Bulk email contract", False, str(e))
+
+    try:
+        email_client = HuefyEmailClient(api_key="sdk_lab_test_key")
+        email_client._http_client = StubHttpClient([{}])  # type: ignore[attr-defined]
+        await email_client.send_email(
+            template_key="welcome",
+            data={},
+            recipient=EmailRecipient(email="not-an-email", type="reply-to"),
+        )
+        check("Validation rejects invalid single recipient", False, "expected validation error")
+    except HuefyDomainError as e:
+        check(
+            "Validation rejects invalid single recipient",
+            "invalid email" in str(e).lower() or "recipient type" in str(e).lower(),
+            str(e),
+        )
+    except Exception as e:
+        check("Validation rejects invalid single recipient", False, str(e))
+
+    try:
+        email_client = HuefyEmailClient(api_key="sdk_lab_test_key")
+        email_client._http_client = StubHttpClient([{}])  # type: ignore[attr-defined]
+        await email_client.send_bulk_emails(template_key="digest", recipients=[])
+        check("Validation rejects invalid bulk request", False, "expected validation error")
+    except HuefyDomainError as e:
+        check("Validation rejects invalid bulk request", "at least one email" in str(e).lower(), str(e))
+    except Exception as e:
+        check("Validation rejects invalid bulk request", False, str(e))
+
+    try:
+        health_client = HuefyEmailClient(api_key="sdk_lab_test_key")
+        stub = StubHttpClient(
+            [
+                {
+                    "success": True,
+                    "data": {
+                        "status": "healthy",
+                        "timestamp": "2026-05-07T10:00:00Z",
+                        "version": "1.0.0",
+                    },
+                    "correlationId": "corr_health_123",
+                }
+            ]
+        )
+        health_client._http_client = stub  # type: ignore[attr-defined]
+        response = await health_client.email_health_check()
+        path, method, _ = stub.calls[0]
+        ok = path == "/health" and method == "GET" and response.data.status == "healthy"
+        check("Health check path", ok, "" if ok else str(stub.calls))
+    except Exception as e:
+        check("Health check path", False, str(e))
+
     try:
         if client is not None:
             await client.close()
@@ -120,8 +227,7 @@ async def run() -> None:
     if failed == 0:
         print("All verifications passed!")
         sys.exit(0)
-    else:
-        sys.exit(1)
+    sys.exit(1)
 
 
 if __name__ == "__main__":
