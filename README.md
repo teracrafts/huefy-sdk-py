@@ -149,7 +149,7 @@ if health["data"]["status"] != "healthy":
 
 ## Local Development
 
-`HUEFY_MODE=local` resolves to `https://api.huefy.on/api/v1/sdk`. To bypass Caddy and hit the raw app port directly, override `base_url` to `http://localhost:8080/api/v1/sdk`:
+`HUEFY_MODE=local` resolves to `https://api.huefy.on/api/v1/sdk`. To bypass Caddy and hit the raw app port directly, override `base_url` to `http://localhost:3140/api/v1/sdk`:
 
 ```python
 from huefy import HuefyEmailClient, HuefyConfig
