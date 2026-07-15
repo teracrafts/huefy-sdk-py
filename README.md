@@ -109,6 +109,7 @@ from huefy import (
     HuefyEmailClient,
     HuefyConfig,
     HuefyError,
+    InsufficientQuotaError,
     RateLimitError,
 )
 
@@ -122,6 +123,8 @@ async with HuefyEmailClient(**HuefyConfig(api_key="sdk_your_api_key").to_kwargs(
         print("Delivered:", response.data.emailId)
     except AuthenticationError:
         print("Invalid API key")
+    except InsufficientQuotaError:
+        print("Quota exhausted. Upgrade or wait for the next billing period")
     except RateLimitError as e:
         print(f"Rate limited. Retry after {e.retry_after}s")
     except CircuitOpenError:
@@ -135,6 +138,7 @@ async with HuefyEmailClient(**HuefyConfig(api_key="sdk_your_api_key").to_kwargs(
 | Class | Code | Meaning |
 |-------|------|---------|
 | `AuthenticationError` | `INVALID_API_KEY` | API key rejected |
+| `InsufficientQuotaError` | `INSUFFICIENT_QUOTA` | Account or organization quota exhausted |
 | `RateLimitError` | `RATE_LIMIT_EXCEEDED` | Rate limit exceeded |
 | `TemplateNotFoundError` | `TEMPLATE_NOT_FOUND` | Template key not found |
 | `HuefyError` | `ErrorCode.*` | Transport or HTTP-layer SDK failure |
