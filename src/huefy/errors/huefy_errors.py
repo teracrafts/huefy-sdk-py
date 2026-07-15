@@ -54,6 +54,11 @@ class RateLimitError(HuefyDomainError):
         self.retry_after = retry_after
 
 
+class InsufficientQuotaError(HuefyDomainError):
+    def __init__(self, message: str = "Insufficient quota", details: Optional[Dict[str, Any]] = None):
+        super().__init__(message, "INSUFFICIENT_QUOTA", 402, details)
+
+
 def create_error_from_response(error_data: Dict[str, Any], status_code: int) -> HuefyDomainError:
     code = error_data.get("code", "")
     message = error_data.get("error", error_data.get("message", "Unknown error"))
@@ -67,6 +72,7 @@ def create_error_from_response(error_data: Dict[str, Any], status_code: int) -> 
         "INVALID_RECIPIENT": lambda: InvalidRecipientError(message, details),
         "PROVIDER_ERROR": lambda: ProviderError(message, details=details),
         "RATE_LIMIT_EXCEEDED": lambda: RateLimitError(message, details=details),
+        "INSUFFICIENT_QUOTA": lambda: InsufficientQuotaError(message, details),
     }
 
     factory = error_map.get(code)

@@ -29,6 +29,7 @@ from huefy.errors.huefy_errors import (
     InvalidRecipientError,
     ProviderError,
     RateLimitError,
+    InsufficientQuotaError,
     create_error_from_response,
 )
 from huefy.validators.email_validators import (
@@ -66,6 +67,7 @@ __all__ = [
     "InvalidRecipientError",
     "ProviderError",
     "RateLimitError",
+    "InsufficientQuotaError",
     "create_error_from_response",
     "validate_email",
     "validate_template_key",

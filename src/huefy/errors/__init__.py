@@ -10,6 +10,7 @@ from huefy.errors.huefy_errors import (
     InvalidRecipientError,
     ProviderError,
     RateLimitError,
+    InsufficientQuotaError,
     create_error_from_response,
 )
 from huefy.errors.sanitizer import (
@@ -32,6 +33,7 @@ __all__ = [
     "InvalidRecipientError",
     "ProviderError",
     "RateLimitError",
+    "InsufficientQuotaError",
     "create_error_from_response",
     # Sanitizer
     "ErrorSanitizationConfig",

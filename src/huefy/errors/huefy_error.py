@@ -152,6 +152,8 @@ class HuefyError(Exception):
         request_id = body.get("request_id") or body.get("requestId")
 
         code = _status_code_to_error_code(status_code)
+        if body.get("code") == "INSUFFICIENT_QUOTA":
+            code = ErrorCode.API_INSUFFICIENT_QUOTA
         recoverable = is_recoverable_code(code)
 
         retry_after: float | None = None
@@ -187,6 +189,7 @@ def _status_code_to_error_code(status_code: int) -> ErrorCode:
     status_map: dict[int, ErrorCode] = {
         400: ErrorCode.API_BAD_REQUEST,
         401: ErrorCode.AUTH_INVALID_KEY,
+        402: ErrorCode.API_INSUFFICIENT_QUOTA,
         403: ErrorCode.AUTH_INSUFFICIENT_PERMISSIONS,
         404: ErrorCode.API_NOT_FOUND,
         429: ErrorCode.API_RATE_LIMITED,
