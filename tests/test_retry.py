@@ -19,15 +19,14 @@ class TestCalculateDelay:
 
     def test_first_attempt_is_near_base_delay(self) -> None:
         delay = calculate_delay(attempt=0, base_delay=1.0, max_delay=30.0)
-        # Base delay = 1.0, multiplicative jitter [0.5, 1.0], so range is [0.5, 1.0]
-        assert 0.5 <= delay <= 1.0
+        # Base delay = 1.0, multiplicative jitter [0.8, 1.2], so range is [0.8, 1.2]
+        assert 0.8 <= delay <= 1.2
 
     def test_delay_increases_with_attempts(self) -> None:
-        delay_0 = calculate_delay(attempt=0, base_delay=1.0, max_delay=60.0)
         delay_2 = calculate_delay(attempt=2, base_delay=1.0, max_delay=60.0)
-        # With multiplicative jitter, attempt 2: base = 4.0, jitter [0.5, 1.0]
-        # so range is [2.0, 4.0]
-        assert delay_2 >= 2.0
+        # With multiplicative jitter, attempt 2: base = 4.0, jitter [0.8, 1.2]
+        # so range is [3.2, 4.8].
+        assert 3.2 <= delay_2 <= 4.8
 
     def test_delay_is_capped_at_max(self) -> None:
         delay = calculate_delay(attempt=10, base_delay=1.0, max_delay=5.0)
