@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import importlib
 
-from huefy.types import BulkEmailResult, EmailRecipient
+from huefy.types import BulkEmailResult, EmailRecipient, ValidateTemplateResponse
 
 
 def test_import_huefy_package_exports_public_symbols() -> None:
@@ -15,6 +15,7 @@ def test_import_huefy_package_exports_public_symbols() -> None:
     assert package.HuefyConfig is not None
     assert package.BulkEmailResult is BulkEmailResult
     assert package.EmailRecipient is EmailRecipient
+    assert package.ValidateTemplateResponse is ValidateTemplateResponse
 
 
 def test_bulk_email_result_backfills_success_from_status() -> None:

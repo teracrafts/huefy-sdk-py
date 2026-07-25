@@ -8,6 +8,8 @@ from huefy.types.email import (
     BulkRecipient,
     SendBulkEmailsRequest,
     SendBulkEmailsResponse,
+    ValidateTemplateRequest,
+    ValidateTemplateResponse,
     BulkEmailResult,
     HealthResponse,
 )
@@ -20,6 +22,8 @@ __all__ = [
     "BulkRecipient",
     "SendBulkEmailsRequest",
     "SendBulkEmailsResponse",
+    "ValidateTemplateRequest",
+    "ValidateTemplateResponse",
     "BulkEmailResult",
     "HealthResponse",
 ]

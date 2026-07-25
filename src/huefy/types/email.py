@@ -240,6 +240,63 @@ class SendBulkEmailsResponse:
 
 
 @dataclass
+class ValidateTemplateRequest:
+    """Request to validate a template and optional test data."""
+    template_key: str
+    template_version: Optional[int] = None
+    test_data: Optional[Dict[str, Any]] = None
+    correlation_id: Optional[str] = None
+
+    def to_dict(self) -> Dict[str, Any]:
+        result: Dict[str, Any] = {
+            "templateKey": self.template_key,
+        }
+        if self.template_version is not None:
+            result["templateVersion"] = self.template_version
+        if self.test_data is not None:
+            result["testData"] = self.test_data
+        if self.correlation_id is not None:
+            result["correlationId"] = self.correlation_id
+        return result
+
+
+@dataclass
+class ValidateTemplateResponseData:
+    """Data payload from a validate-template response."""
+    isValid: bool
+    validatedAt: str
+    errors: Optional[List[str]] = None
+    warnings: Optional[List[str]] = None
+    variables: Optional[List[str]] = None
+
+    @classmethod
+    def from_dict(cls, data: Dict[str, Any]) -> ValidateTemplateResponseData:
+        return cls(
+            isValid=data.get("isValid", False),
+            errors=data.get("errors"),
+            warnings=data.get("warnings"),
+            variables=data.get("variables"),
+            validatedAt=data.get("validatedAt", ""),
+        )
+
+
+@dataclass
+class ValidateTemplateResponse:
+    """Response from validating a template."""
+    success: bool
+    data: ValidateTemplateResponseData
+    correlationId: str
+
+    @classmethod
+    def from_dict(cls, data: Dict[str, Any]) -> ValidateTemplateResponse:
+        return cls(
+            success=data.get("success", False),
+            data=ValidateTemplateResponseData.from_dict(data.get("data", {})),
+            correlationId=data.get("correlationId", ""),
+        )
+
+
+@dataclass
 class HealthResponseData:
     """Data payload from a health check response."""
     status: str

@@ -13,6 +13,8 @@ from .types.email import (
     BulkRecipient,
     SendBulkEmailsRequest,
     SendBulkEmailsResponse,
+    ValidateTemplateRequest,
+    ValidateTemplateResponse,
     HealthResponse,
 )
 from .validators.email_validators import (
@@ -119,6 +121,33 @@ class HuefyEmailClient(BaseClient):
             "/emails/send-bulk", method="POST", body=request.to_dict()
         )
         return SendBulkEmailsResponse.from_dict(response)
+
+    async def validate_template(
+        self,
+        *,
+        template_key: str,
+        template_version: Optional[int] = None,
+        test_data: Optional[Dict[str, Any]] = None,
+        correlation_id: Optional[str] = None,
+    ) -> ValidateTemplateResponse:
+        template_err = validate_template_key(template_key)
+        if template_err:
+            raise HuefyDomainError(template_err, "VALIDATION_ERROR", 400)
+
+        if test_data is not None:
+            warn_if_potential_pii(test_data, "template validation data", self._logger)
+
+        request = ValidateTemplateRequest(
+            template_key=template_key.strip(),
+            template_version=template_version,
+            test_data=test_data,
+            correlation_id=correlation_id,
+        )
+
+        response = await self._http_client.request(
+            "/emails/validate-template", method="POST", body=request.to_dict()
+        )
+        return ValidateTemplateResponse.from_dict(response)
 
     async def email_health_check(self) -> HealthResponse:
         response = await self._http_client.request("/health", method="GET")

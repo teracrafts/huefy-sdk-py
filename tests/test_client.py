@@ -260,3 +260,51 @@ class TestEmailClientSendBulkEmails:
             )
 
         await client.close()
+
+
+class TestEmailClientValidateTemplate:
+    async def test_validate_template_serializes_request(self) -> None:
+        client = HuefyEmailClient(api_key="sk_test_validate_template")
+        mock_response = {
+            "success": True,
+            "correlationId": "corr-validate",
+            "data": {
+                "isValid": True,
+                "errors": [],
+                "warnings": [],
+                "variables": ["firstName"],
+                "validatedAt": "2026-07-25T18:00:00Z",
+            },
+        }
+
+        with patch.object(
+            client._http_client, "request", new_callable=AsyncMock, return_value=mock_response
+        ) as mock_request:
+            response = await client.validate_template(
+                template_key=" welcome-email ",
+                template_version=3,
+                test_data={"firstName": "Ada"},
+                correlation_id="corr-validate",
+            )
+            mock_request.assert_called_once_with(
+                "/emails/validate-template",
+                method="POST",
+                body={
+                    "templateKey": "welcome-email",
+                    "templateVersion": 3,
+                    "testData": {"firstName": "Ada"},
+                    "correlationId": "corr-validate",
+                },
+            )
+            assert response.data.isValid is True
+            assert response.data.variables == ["firstName"]
+
+        await client.close()
+
+    async def test_validate_template_rejects_blank_template_key(self) -> None:
+        client = HuefyEmailClient(api_key="sk_test_validate_template")
+
+        with pytest.raises(HuefyDomainError, match="Template key"):
+            await client.validate_template(template_key="   ")
+
+        await client.close()
