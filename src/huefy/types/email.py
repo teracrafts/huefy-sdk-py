@@ -188,6 +188,9 @@ class SendBulkEmailsResponseData:
     batchId: str
     status: str
     templateKey: str
+    templateVersion: int
+    senderUsed: str
+    senderVerified: bool
     totalRecipients: int
     processedCount: int
     successCount: int
@@ -205,6 +208,9 @@ class SendBulkEmailsResponseData:
             batchId=data.get("batchId", ""),
             status=data.get("status", ""),
             templateKey=data.get("templateKey", ""),
+            templateVersion=data.get("templateVersion", 0),
+            senderUsed=data.get("senderUsed", ""),
+            senderVerified=data.get("senderVerified", False),
             totalRecipients=data.get("totalRecipients", 0),
             processedCount=data.get("processedCount", 0),
             successCount=data.get("successCount", 0),

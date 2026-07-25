@@ -10,7 +10,7 @@ from huefy.client import HuefyClient
 from huefy.errors.huefy_errors import HuefyDomainError
 from huefy.huefy_client import HuefyEmailClient
 from huefy.http.retry import RetryConfig
-from huefy.types import BulkRecipient, EmailRecipient
+from huefy.types import BulkRecipient, EmailRecipient, SendBulkEmailsResponse
 from huefy.utils.logger import NoopLogger
 
 
@@ -132,6 +132,33 @@ class TestEmailClientSendEmail:
 
 
 class TestEmailClientSendBulkEmails:
+    def test_bulk_response_preserves_backend_metadata(self) -> None:
+        response = SendBulkEmailsResponse.from_dict(
+            {
+                "success": True,
+                "correlationId": "corr-bulk",
+                "data": {
+                    "batchId": "batch-1",
+                    "status": "completed",
+                    "templateKey": "welcome-email",
+                    "templateVersion": 4,
+                    "senderUsed": "noreply@example.com",
+                    "senderVerified": True,
+                    "totalRecipients": 1,
+                    "processedCount": 1,
+                    "successCount": 1,
+                    "failureCount": 0,
+                    "suppressedCount": 0,
+                    "startedAt": "2026-07-25T18:00:00Z",
+                    "recipients": [{"email": "user@example.com", "status": "sent"}],
+                },
+            }
+        )
+
+        assert response.data.templateVersion == 4
+        assert response.data.senderUsed == "noreply@example.com"
+        assert response.data.senderVerified is True
+
     async def test_send_bulk_emails_rejects_blank_template_key(self) -> None:
         client = HuefyEmailClient(api_key="sk_test_send_bulk")
 
